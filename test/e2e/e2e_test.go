@@ -37,7 +37,7 @@ const namespace = "platform-disk-management-agent-system"
 const serviceAccountName = "platform-disk-management-agent-controller-manager"
 
 // metricsServiceName is the name of the metrics service of the project
-const metricsServiceName = "platform-disk-management-agent-controller-manager-metrics-service"
+const metricsServiceName = "platform-disk-management-agent-metrics-service"
 
 // metricsRoleBindingName is the name of the RBAC that will be created to allow get the metrics data
 const metricsRoleBindingName = "platform-disk-management-agent-metrics-binding"
@@ -139,10 +139,20 @@ var _ = Describe("Manager", Ordered, func() {
 
 	Context("Manager", func() {
 		It("should run successfully", func() {
-			By("validating that the controller-manager pod is running as expected")
+			By("validating that the controller-manager DaemonSet pods are running as expected")
 			verifyControllerUp := func(g Gomega) {
-				// Get the name of the controller-manager pod
+				// Verify the DaemonSet is fully rolled out
 				cmd := exec.Command("kubectl", "get",
+					"daemonset", "platform-disk-management-agent-controller-manager",
+					"-o", "jsonpath={.status.numberReady}",
+					"-n", namespace,
+				)
+				output, err := utils.Run(cmd)
+				g.Expect(err).NotTo(HaveOccurred(), "Failed to retrieve DaemonSet status")
+				g.Expect(output).NotTo(Equal("0"), "expected at least 1 DaemonSet pod ready")
+
+				// Get the name of a controller-manager pod for log collection
+				cmd = exec.Command("kubectl", "get",
 					"pods", "-l", "control-plane=controller-manager",
 					"-o", "go-template={{ range .items }}"+
 						"{{ if not .metadata.deletionTimestamp }}"+
@@ -154,7 +164,7 @@ var _ = Describe("Manager", Ordered, func() {
 				podOutput, err := utils.Run(cmd)
 				g.Expect(err).NotTo(HaveOccurred(), "Failed to retrieve controller-manager pod information")
 				podNames := utils.GetNonEmptyLines(podOutput)
-				g.Expect(podNames).To(HaveLen(1), "expected 1 controller pod running")
+				g.Expect(podNames).NotTo(BeEmpty(), "expected at least 1 controller pod running")
 				controllerPodName = podNames[0]
 				g.Expect(controllerPodName).To(ContainSubstring("controller-manager"))
 
@@ -163,7 +173,7 @@ var _ = Describe("Manager", Ordered, func() {
 					"pods", controllerPodName, "-o", "jsonpath={.status.phase}",
 					"-n", namespace,
 				)
-				output, err := utils.Run(cmd)
+				output, err = utils.Run(cmd)
 				g.Expect(err).NotTo(HaveOccurred())
 				g.Expect(output).To(Equal("Running"), "Incorrect controller-manager pod status")
 			}
