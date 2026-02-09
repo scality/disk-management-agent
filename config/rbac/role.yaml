@@ -1,11 +1,32 @@
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  labels:
-    app.kubernetes.io/name: platform-disk-management-agent
-    app.kubernetes.io/managed-by: kustomize
   name: manager-role
 rules:
-- apiGroups: [""]
-  resources: ["pods"]
-  verbs: ["get", "list", "watch"]
+- apiGroups:
+  - metalk8s.scality.com
+  resources:
+  - discovereddisks
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - metalk8s.scality.com
+  resources:
+  - discovereddisks/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - metalk8s.scality.com
+  resources:
+  - discovereddisks/status
+  verbs:
+  - get
+  - patch
+  - update
