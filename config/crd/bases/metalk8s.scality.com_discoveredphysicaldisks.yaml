@@ -14,7 +14,20 @@ spec:
     singular: discoveredphysicaldisk
   scope: Namespaced
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .spec.nodeName
+      name: Node
+      type: string
+    - jsonPath: .spec.type
+      name: Type
+      type: string
+    - jsonPath: .spec.size
+      name: Size
+      type: integer
+    - jsonPath: .status.status
+      name: Status
+      type: string
+    name: v1alpha1
     schema:
       openAPIV3Schema:
         description: DiscoveredPhysicalDisk is the Schema for the discoveredphysicaldisks
@@ -40,14 +53,100 @@ spec:
           spec:
             description: DiscoveredPhysicalDiskSpec defines the desired state of DiscoveredPhysicalDisk.
             properties:
-              foo:
-                description: Foo is an example field of DiscoveredPhysicalDisk. Edit
-                  discoveredphysicaldisk_types.go to remove/update
+              controller:
+                description: Controller identifies the RAID controller managing this
+                  disk.
+                properties:
+                  id:
+                    description: ID is the controller index.
+                    type: integer
+                  type:
+                    description: Type is the controller type (e.g. "MegaRAID").
+                    type: string
+                required:
+                - id
+                - type
+                type: object
+              id:
+                description: ID is the disk identifier as reported by the controller
+                  (e.g. "0:1:2").
                 type: string
+              model:
+                description: Model is the disk model name.
+                type: string
+              nodeName:
+                description: NodeName is the name of the node where this disk was
+                  discovered.
+                type: string
+              serial:
+                description: Serial is the disk serial number.
+                type: string
+              size:
+                description: Size is the disk capacity in bytes.
+                format: int64
+                type: integer
+              slot:
+                description: Slot describes the physical slot location of the disk.
+                properties:
+                  bay:
+                    description: Bay is the bay number.
+                    type: string
+                  enclosure:
+                    description: Enclosure is the enclosure number.
+                    type: string
+                  port:
+                    description: Port is the port number.
+                    type: string
+                required:
+                - bay
+                - enclosure
+                - port
+                type: object
+              type:
+                description: Type is the disk media type.
+                enum:
+                - HDD
+                - SSD
+                - NVMe
+                type: string
+              vendor:
+                description: Vendor is the disk manufacturer.
+                type: string
+              wwn:
+                description: WWN is the World Wide Name of the disk.
+                type: string
+            required:
+            - controller
+            - id
+            - nodeName
+            - size
+            - slot
+            - type
             type: object
           status:
             description: DiscoveredPhysicalDiskStatus defines the observed state of
               DiscoveredPhysicalDisk.
+            properties:
+              devicePath:
+                description: DevicePath is the OS device path (e.g. "/dev/sda").
+                type: string
+              jbod:
+                description: JBOD indicates whether the disk is in JBOD (passthrough)
+                  mode.
+                type: boolean
+              permanentPath:
+                description: PermanentPath is the stable device path (e.g. "/dev/disk/by-id/wwn-0x...").
+                type: string
+              reason:
+                description: Reason provides additional context for the current status.
+                type: string
+              status:
+                description: Status is the current disk status.
+                enum:
+                - Used
+                - Available
+                - Failed
+                type: string
             type: object
         type: object
     served: true
