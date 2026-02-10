@@ -30,7 +30,7 @@ import (
 	metalk8sv1alpha1 "platform-disk-management-agent/api/v1alpha1"
 )
 
-var _ = Describe("DiscoveredDisk Controller", func() {
+var _ = Describe("DiscoveredPhysicalDisk Controller", func() {
 	Context("When reconciling a resource", func() {
 		const resourceName = "test-resource"
 
@@ -40,13 +40,13 @@ var _ = Describe("DiscoveredDisk Controller", func() {
 			Name:      resourceName,
 			Namespace: "default", // TODO(user):Modify as needed
 		}
-		discovereddisk := &metalk8sv1alpha1.DiscoveredDisk{}
+		discoveredphysicaldisk := &metalk8sv1alpha1.DiscoveredPhysicalDisk{}
 
 		BeforeEach(func() {
-			By("creating the custom resource for the Kind DiscoveredDisk")
-			err := k8sClient.Get(ctx, typeNamespacedName, discovereddisk)
+			By("creating the custom resource for the Kind DiscoveredPhysicalDisk")
+			err := k8sClient.Get(ctx, typeNamespacedName, discoveredphysicaldisk)
 			if err != nil && errors.IsNotFound(err) {
-				resource := &metalk8sv1alpha1.DiscoveredDisk{
+				resource := &metalk8sv1alpha1.DiscoveredPhysicalDisk{
 					ObjectMeta: metav1.ObjectMeta{
 						Name:      resourceName,
 						Namespace: "default",
@@ -59,16 +59,16 @@ var _ = Describe("DiscoveredDisk Controller", func() {
 
 		AfterEach(func() {
 			// TODO(user): Cleanup logic after each test, like removing the resource instance.
-			resource := &metalk8sv1alpha1.DiscoveredDisk{}
+			resource := &metalk8sv1alpha1.DiscoveredPhysicalDisk{}
 			err := k8sClient.Get(ctx, typeNamespacedName, resource)
 			Expect(err).NotTo(HaveOccurred())
 
-			By("Cleanup the specific resource instance DiscoveredDisk")
+			By("Cleanup the specific resource instance DiscoveredPhysicalDisk")
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
-			controllerReconciler := &DiscoveredDiskReconciler{
+			controllerReconciler := &DiscoveredPhysicalDiskReconciler{
 				Client: k8sClient,
 				Scheme: k8sClient.Scheme(),
 			}

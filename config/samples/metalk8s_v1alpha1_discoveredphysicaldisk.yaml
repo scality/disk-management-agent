@@ -1,9 +1,9 @@
 apiVersion: metalk8s.scality.com/v1alpha1
-kind: DiscoveredDisk
+kind: DiscoveredPhysicalDisk
 metadata:
   labels:
     app.kubernetes.io/name: platform-disk-management-agent
     app.kubernetes.io/managed-by: kustomize
-  name: discovereddisk-sample
+  name: discoveredphysicaldisk-sample
 spec:
   # TODO(user): Add fields here

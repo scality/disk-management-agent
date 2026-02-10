@@ -7,7 +7,7 @@ rules:
 - apiGroups:
   - metalk8s.scality.com
   resources:
-  - discovereddisks
+  - discoveredphysicaldisks
   verbs:
   - create
   - delete
@@ -19,13 +19,13 @@ rules:
 - apiGroups:
   - metalk8s.scality.com
   resources:
-  - discovereddisks/finalizers
+  - discoveredphysicaldisks/finalizers
   verbs:
   - update
 - apiGroups:
   - metalk8s.scality.com
   resources:
-  - discovereddisks/status
+  - discoveredphysicaldisks/status
   verbs:
   - get
   - patch

@@ -23,17 +23,17 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// DiscoveredDiskSpec defines the desired state of DiscoveredDisk.
-type DiscoveredDiskSpec struct {
+// DiscoveredPhysicalDiskSpec defines the desired state of DiscoveredPhysicalDisk.
+type DiscoveredPhysicalDiskSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of DiscoveredDisk. Edit discovereddisk_types.go to remove/update
+	// Foo is an example field of DiscoveredPhysicalDisk. Edit discoveredphysicaldisk_types.go to remove/update
 	Foo string `json:"foo,omitempty"`
 }
 
-// DiscoveredDiskStatus defines the observed state of DiscoveredDisk.
-type DiscoveredDiskStatus struct {
+// DiscoveredPhysicalDiskStatus defines the observed state of DiscoveredPhysicalDisk.
+type DiscoveredPhysicalDiskStatus struct {
 	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 }
@@ -41,24 +41,24 @@ type DiscoveredDiskStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
 
-// DiscoveredDisk is the Schema for the discovereddisks API.
-type DiscoveredDisk struct {
+// DiscoveredPhysicalDisk is the Schema for the discoveredphysicaldisks API.
+type DiscoveredPhysicalDisk struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   DiscoveredDiskSpec   `json:"spec,omitempty"`
-	Status DiscoveredDiskStatus `json:"status,omitempty"`
+	Spec   DiscoveredPhysicalDiskSpec   `json:"spec,omitempty"`
+	Status DiscoveredPhysicalDiskStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 
-// DiscoveredDiskList contains a list of DiscoveredDisk.
-type DiscoveredDiskList struct {
+// DiscoveredPhysicalDiskList contains a list of DiscoveredPhysicalDisk.
+type DiscoveredPhysicalDiskList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
-	Items           []DiscoveredDisk `json:"items"`
+	Items           []DiscoveredPhysicalDisk `json:"items"`
 }
 
 func init() {
-	SchemeBuilder.Register(&DiscoveredDisk{}, &DiscoveredDiskList{})
+	SchemeBuilder.Register(&DiscoveredPhysicalDisk{}, &DiscoveredPhysicalDiskList{})
 }

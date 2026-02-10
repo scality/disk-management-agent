@@ -27,28 +27,28 @@ import (
 	metalk8sv1alpha1 "platform-disk-management-agent/api/v1alpha1"
 )
 
-// DiscoveredDiskReconciler reconciles a DiscoveredDisk object
-type DiscoveredDiskReconciler struct {
+// DiscoveredPhysicalDiskReconciler reconciles a DiscoveredPhysicalDisk object
+type DiscoveredPhysicalDiskReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
 }
 
-// +kubebuilder:rbac:groups=metalk8s.scality.com,resources=discovereddisks,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=metalk8s.scality.com,resources=discovereddisks/status,verbs=get;update;patch
-// +kubebuilder:rbac:groups=metalk8s.scality.com,resources=discovereddisks/finalizers,verbs=update
+// +kubebuilder:rbac:groups=metalk8s.scality.com,resources=discoveredphysicaldisks,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=metalk8s.scality.com,resources=discoveredphysicaldisks/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=metalk8s.scality.com,resources=discoveredphysicaldisks/finalizers,verbs=update
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
 // TODO(user): Modify the Reconcile function to compare the state specified by
-// the DiscoveredDisk object against the actual cluster state, and then
+// the DiscoveredPhysicalDisk object against the actual cluster state, and then
 // perform operations to make the cluster state reflect the state specified by
 // the user.
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/reconcile
-func (r *DiscoveredDiskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *DiscoveredPhysicalDiskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := logf.FromContext(ctx)
-	logger.Info("Reconciling DiscoveredDisk")
+	logger.Info("Reconciling DiscoveredPhysicalDisk")
 
 	// TODO(user): your logic here
 
@@ -56,9 +56,9 @@ func (r *DiscoveredDiskReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *DiscoveredDiskReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *DiscoveredPhysicalDiskReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&metalk8sv1alpha1.DiscoveredDisk{}).
-		Named("discovereddisk").
+		For(&metalk8sv1alpha1.DiscoveredPhysicalDisk{}).
+		Named("discoveredphysicaldisk").
 		Complete(r)
 }

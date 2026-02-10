@@ -20,7 +20,7 @@ resources:
 # default, aiding admins in cluster management. Those roles are
 # not used by the platform-disk-management-agent itself. You can comment the following lines
 # if you do not want those helpers be installed with your Project.
-- discovereddisk_admin_role.yaml
-- discovereddisk_editor_role.yaml
-- discovereddisk_viewer_role.yaml
+- discoveredphysicaldisk_admin_role.yaml
+- discoveredphysicaldisk_editor_role.yaml
+- discoveredphysicaldisk_viewer_role.yaml
 

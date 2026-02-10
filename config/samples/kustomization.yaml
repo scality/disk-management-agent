@@ -1,4 +1,4 @@
 ## Append samples of your project ##
 resources:
-- metalk8s_v1alpha1_discovereddisk.yaml
+- metalk8s_v1alpha1_discoveredphysicaldisk.yaml
 # +kubebuilder:scaffold:manifestskustomizesamples
