@@ -22,7 +22,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
 )
@@ -61,9 +64,12 @@ func (r *DiscoveredPhysicalDiskReconciler) Reconcile(ctx context.Context, req ct
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *DiscoveredPhysicalDiskReconciler) SetupWithManager(mgr ctrl.Manager) error {
+// tickerEvents is a channel of GenericEvent sent by the DiscoveryTicker;
+// receiving on this channel will trigger reconciliation.
+func (r *DiscoveredPhysicalDiskReconciler) SetupWithManager(mgr ctrl.Manager, tickerEvents <-chan event.GenericEvent) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&metalk8sv1alpha1.DiscoveredPhysicalDisk{}).
+		WatchesRawSource(source.Channel(tickerEvents, &handler.EnqueueRequestForObject{})).
 		Named("discoveredphysicaldisk").
 		Complete(r)
 }
