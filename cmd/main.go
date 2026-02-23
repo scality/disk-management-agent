@@ -47,6 +47,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/pkg/infrastructure/di"
 
 	webhookv1alpha1 "disk-management-agent/internal/webhook/v1alpha1"
 )
@@ -214,6 +215,12 @@ func main() {
 		os.Exit(1)
 	}
 
+	container := di.NewContainer(
+		ctrl.Log.WithName("di"),
+		mgr.GetClient(),
+		nodeName,
+	)
+
 	tickerEvents := make(chan event.GenericEvent)
 
 	if err := (&controller.DiscoveredPhysicalDiskReconciler{
@@ -226,10 +233,10 @@ func main() {
 	}
 
 	discoveryTicker := &controller.DiscoveryTicker{
-		Client:    mgr.GetClient(),
 		NodeName:  nodeName,
 		Interval:  controller.DefaultDiscoveryInterval,
 		EventChan: tickerEvents,
+		UseCase:   container.GetDiscoverPhysicalDrivesUseCase(),
 	}
 	if err := mgr.Add(discoveryTicker); err != nil {
 		setupLog.Error(err, "unable to add discovery ticker to manager")
