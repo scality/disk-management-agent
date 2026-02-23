@@ -44,6 +44,7 @@ func (c *Container) GetDiscoverPhysicalDrivesUseCase() *usecase.DiscoverPhysical
 			discoverers,
 			c.getDiscoveredPhysicalDiskStore(),
 			c.nodeName,
+			c.namespace,
 		)
 	}
 

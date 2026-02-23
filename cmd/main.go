@@ -219,6 +219,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	podNamespace := os.Getenv("POD_NAMESPACE")
+
 	var discoverUseCase *usecase.DiscoverPhysicalDrives
 
 	if os.Getenv("FAKE_DISCOVERY") == "true" {
@@ -228,12 +230,14 @@ func main() {
 			[]service.PhysicalDriveDiscoverer{physicaldrivediscoverer.NewFake()},
 			discoveredphysicaldiskstore.NewKubernetes(mgr.GetClient()),
 			nodeName,
+			podNamespace,
 		)
 	} else {
 		container := di.NewContainer(
 			ctrl.Log.WithName("di"),
 			mgr.GetClient(),
 			nodeName,
+			podNamespace,
 		)
 		discoverUseCase = container.GetDiscoverPhysicalDrivesUseCase()
 	}
@@ -264,7 +268,6 @@ func main() {
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		// Build the allowed service account identity from the pod's own namespace
 		// and service account name (injected via the Kubernetes downward API).
-		podNamespace := os.Getenv("POD_NAMESPACE")
 		podServiceAccount := os.Getenv("POD_SERVICE_ACCOUNT")
 		if podNamespace == "" || podServiceAccount == "" {
 			setupLog.Error(nil, "POD_NAMESPACE and/or POD_SERVICE_ACCOUNT environment variables are required")

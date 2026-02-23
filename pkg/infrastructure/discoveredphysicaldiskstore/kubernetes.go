@@ -39,12 +39,12 @@ func NewKubernetes(c client.Client) *Kubernetes {
 	return &Kubernetes{client: c}
 }
 
-// Get retrieves a DiscoveredPhysicalDisk by name (cluster-scoped).
+// Get retrieves a DiscoveredPhysicalDisk by namespace and name.
 // Returns nil and no error when the resource does not exist.
-func (s *Kubernetes) Get(ctx context.Context, name string) (*metalk8sv1alpha1.DiscoveredPhysicalDisk, error) {
+func (s *Kubernetes) Get(ctx context.Context, namespace, name string) (*metalk8sv1alpha1.DiscoveredPhysicalDisk, error) {
 	disk := &metalk8sv1alpha1.DiscoveredPhysicalDisk{}
 
-	err := s.client.Get(ctx, types.NamespacedName{Name: name}, disk)
+	err := s.client.Get(ctx, types.NamespacedName{Namespace: namespace, Name: name}, disk)
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, nil
