@@ -48,6 +48,10 @@ import (
 
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
 	"disk-management-agent/pkg/infrastructure/di"
+	"disk-management-agent/pkg/infrastructure/discoveredphysicaldiskstore"
+	"disk-management-agent/pkg/infrastructure/physicaldrivediscoverer"
+	"disk-management-agent/pkg/service"
+	"disk-management-agent/pkg/usecase"
 
 	webhookv1alpha1 "disk-management-agent/internal/webhook/v1alpha1"
 )
@@ -215,11 +219,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	container := di.NewContainer(
-		ctrl.Log.WithName("di"),
-		mgr.GetClient(),
-		nodeName,
-	)
+	var discoverUseCase *usecase.DiscoverPhysicalDrives
+
+	if os.Getenv("FAKE_DISCOVERY") == "true" {
+		setupLog.Info("WARNING: FAKE_DISCOVERY is enabled -- using hardcoded drives instead of real RAID controllers")
+		discoverUseCase = usecase.NewDiscoverPhysicalDrives(
+			ctrl.Log.WithName("fake-discovery"),
+			[]service.PhysicalDriveDiscoverer{physicaldrivediscoverer.NewFake()},
+			discoveredphysicaldiskstore.NewKubernetes(mgr.GetClient()),
+			nodeName,
+		)
+	} else {
+		container := di.NewContainer(
+			ctrl.Log.WithName("di"),
+			mgr.GetClient(),
+			nodeName,
+		)
+		discoverUseCase = container.GetDiscoverPhysicalDrivesUseCase()
+	}
 
 	tickerEvents := make(chan event.GenericEvent)
 
@@ -236,7 +253,7 @@ func main() {
 		NodeName:  nodeName,
 		Interval:  controller.DefaultDiscoveryInterval,
 		EventChan: tickerEvents,
-		UseCase:   container.GetDiscoverPhysicalDrivesUseCase(),
+		UseCase:   discoverUseCase,
 	}
 	if err := mgr.Add(discoveryTicker); err != nil {
 		setupLog.Error(err, "unable to add discovery ticker to manager")
