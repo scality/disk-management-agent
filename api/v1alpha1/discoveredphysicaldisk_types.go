@@ -50,16 +50,16 @@ type DiscoveredPhysicalDiskSpec struct {
 	Slot SlotLocation `json:"slot"`
 	// Vendor is the disk manufacturer.
 	// +optional
-	Vendor string `json:"vendor,omitempty"`
+	Vendor *string `json:"vendor,omitempty"`
 	// Model is the disk model name.
 	// +optional
-	Model string `json:"model,omitempty"`
+	Model *string `json:"model,omitempty"`
 	// Serial is the disk serial number.
 	// +optional
-	Serial string `json:"serial,omitempty"`
+	Serial *string `json:"serial,omitempty"`
 	// WWN is the World Wide Name of the disk.
 	// +optional
-	WWN string `json:"wwn,omitempty"`
+	WWN *string `json:"wwn,omitempty"`
 	// Size is the disk capacity in bytes.
 	Size int64 `json:"size"`
 	// Type is the disk media type.
@@ -71,24 +71,25 @@ type DiscoveredPhysicalDiskSpec struct {
 type DiscoveredPhysicalDiskStatus struct {
 	// JBOD indicates whether the disk is in JBOD (passthrough) mode.
 	// +optional
-	JBOD bool `json:"jbod,omitempty"`
+	JBOD *bool `json:"jbod,omitempty"`
 	// Status is the current disk status.
 	// +kubebuilder:validation:Enum=Used;Available;Failed
 	// +optional
-	Status string `json:"status,omitempty"`
+	Status *string `json:"status,omitempty"`
 	// Reason provides additional context for the current status.
 	// +optional
-	Reason string `json:"reason,omitempty"`
+	Reason *string `json:"reason,omitempty"`
 	// DevicePath is the OS device path (e.g. "/dev/sda").
 	// +optional
-	DevicePath string `json:"devicePath,omitempty"`
+	DevicePath *string `json:"devicePath,omitempty"`
 	// PermanentPath is the stable device path (e.g. "/dev/disk/by-id/wwn-0x...").
 	// +optional
-	PermanentPath string `json:"permanentPath,omitempty"`
+	PermanentPath *string `json:"permanentPath,omitempty"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.spec.id`
 // +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.spec.nodeName`
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
 // +kubebuilder:printcolumn:name="Size",type=integer,JSONPath=`.spec.size`
