@@ -27,20 +27,20 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"platform-disk-management-agent/test/utils"
+	"disk-management-agent/test/utils"
 )
 
 // namespace where the project is deployed in
-const namespace = "platform-disk-management-agent-system"
+const namespace = "disk-management-agent-system"
 
 // serviceAccountName created for the project
-const serviceAccountName = "platform-disk-management-agent-controller-manager"
+const serviceAccountName = "disk-management-agent-controller-manager"
 
 // metricsServiceName is the name of the metrics service of the project
-const metricsServiceName = "platform-disk-management-agent-metrics-service"
+const metricsServiceName = "disk-management-agent-metrics-service"
 
 // metricsRoleBindingName is the name of the RBAC that will be created to allow get the metrics data
-const metricsRoleBindingName = "platform-disk-management-agent-metrics-binding"
+const metricsRoleBindingName = "disk-management-agent-metrics-binding"
 
 var _ = Describe("Manager", Ordered, func() {
 	var controllerPodName string
@@ -143,7 +143,7 @@ var _ = Describe("Manager", Ordered, func() {
 			verifyControllerUp := func(g Gomega) {
 				// Verify the DaemonSet is fully rolled out
 				cmd := exec.Command("kubectl", "get",
-					"daemonset", "platform-disk-management-agent-controller-manager",
+					"daemonset", "disk-management-agent-controller-manager",
 					"-o", "jsonpath={.status.numberReady}",
 					"-n", namespace,
 				)
@@ -183,7 +183,7 @@ var _ = Describe("Manager", Ordered, func() {
 		It("should ensure the metrics endpoint is serving metrics", func() {
 			By("creating a ClusterRoleBinding for the service account to allow access to metrics")
 			cmd := exec.Command("kubectl", "create", "clusterrolebinding", metricsRoleBindingName,
-				"--clusterrole=platform-disk-management-agent-metrics-reader",
+				"--clusterrole=disk-management-agent-metrics-reader",
 				fmt.Sprintf("--serviceaccount=%s:%s", namespace, serviceAccountName),
 			)
 			_, err := utils.Run(cmd)

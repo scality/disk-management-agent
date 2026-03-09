@@ -37,8 +37,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	metalk8sv1alpha1 "platform-disk-management-agent/api/v1alpha1"
-	"platform-disk-management-agent/internal/controller"
+	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/internal/controller"
 	// +kubebuilder:scaffold:imports
 )
 

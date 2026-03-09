@@ -1,1 +1,1 @@
-# platform-disk-management-agent
+# disk-management-agent

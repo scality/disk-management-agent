@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	metalk8sv1alpha1 "platform-disk-management-agent/api/v1alpha1"
+	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
 )
 
 // DiscoveredPhysicalDiskReconciler reconciles a DiscoveredPhysicalDisk object
