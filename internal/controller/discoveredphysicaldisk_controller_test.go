@@ -50,7 +50,21 @@ var _ = Describe("DiscoveredPhysicalDisk Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: metalk8sv1alpha1.DiscoveredPhysicalDiskSpec{
+						NodeName: "node-1",
+						Controller: metalk8sv1alpha1.ControllerRef{
+							Type: "MegaRAID",
+							ID:   0,
+						},
+						ID: "0:1:2",
+						Slot: metalk8sv1alpha1.SlotLocation{
+							Port:      "0",
+							Enclosure: "1",
+							Bay:       "2",
+						},
+						Size: 4000787030016,
+						Type: "HDD",
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
