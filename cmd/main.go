@@ -18,6 +18,7 @@ package main
 
 import (
 	"crypto/tls"
+	"disk-management-agent/internal/controller"
 	"flag"
 	"fmt"
 	"os"
@@ -39,7 +40,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
-	"disk-management-agent/internal/controller"
+
 	webhookv1alpha1 "disk-management-agent/internal/webhook/v1alpha1"
 	// +kubebuilder:scaffold:imports
 )
