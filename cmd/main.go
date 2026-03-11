@@ -194,24 +194,27 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "DiscoveredPhysicalDisk")
 		os.Exit(1)
 	}
-	// Build the allowed service account identity from the pod's own namespace
-	// and service account name (injected via the Kubernetes downward API).
-	podNamespace := os.Getenv("POD_NAMESPACE")
-	podServiceAccount := os.Getenv("POD_SERVICE_ACCOUNT")
-	if podNamespace == "" || podServiceAccount == "" {
-		setupLog.Error(nil, "POD_NAMESPACE and/or POD_SERVICE_ACCOUNT environment variables are required")
-		os.Exit(1)
-	}
-	allowedSA := fmt.Sprintf("system:serviceaccount:%s:%s", podNamespace, podServiceAccount)
-	setupLog.Info("Configuring validating webhook", "allowedServiceAccount", allowedSA)
+	// nolint:goconst
+	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
+		// Build the allowed service account identity from the pod's own namespace
+		// and service account name (injected via the Kubernetes downward API).
+		podNamespace := os.Getenv("POD_NAMESPACE")
+		podServiceAccount := os.Getenv("POD_SERVICE_ACCOUNT")
+		if podNamespace == "" || podServiceAccount == "" {
+			setupLog.Error(nil, "POD_NAMESPACE and/or POD_SERVICE_ACCOUNT environment variables are required")
+			os.Exit(1)
+		}
+		allowedSA := fmt.Sprintf("system:serviceaccount:%s:%s", podNamespace, podServiceAccount)
+		setupLog.Info("Configuring validating webhook", "allowedServiceAccount", allowedSA)
 
-	if err := webhookv1alpha1.SetupDiscoveredPhysicalDiskWebhookWithManager(mgr,
-		&webhookv1alpha1.DiscoveredPhysicalDiskCustomValidator{
-			AllowedServiceAccount: allowedSA,
-		},
-	); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "DiscoveredPhysicalDisk")
-		os.Exit(1)
+		if err := webhookv1alpha1.SetupDiscoveredPhysicalDiskWebhookWithManager(mgr,
+			&webhookv1alpha1.DiscoveredPhysicalDiskCustomValidator{
+				AllowedServiceAccount: allowedSA,
+			},
+		); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "DiscoveredPhysicalDisk")
+			os.Exit(1)
+		}
 	}
 	// +kubebuilder:scaffold:builder
 
