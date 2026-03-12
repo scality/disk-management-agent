@@ -18,21 +18,27 @@ package main
 
 import (
 	"crypto/tls"
-	"disk-management-agent/internal/controller"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
-	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"disk-management-agent/internal/controller"
 
+	// +kubebuilder:scaffold:imports
+
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+
+	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
+	// to ensure that exec-entrypoint and run can make use of them.
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
@@ -42,7 +48,6 @@ import (
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
 
 	webhookv1alpha1 "disk-management-agent/internal/webhook/v1alpha1"
-	// +kubebuilder:scaffold:imports
 )
 
 var (
@@ -177,11 +182,31 @@ func main() {
 		})
 	}
 
+	// Retrieve the node name injected via the Kubernetes Downward API.
+	// This is required so that the cache only watches DiscoveredPhysicalDisk
+	// resources that belong to the local node.
+	nodeName := os.Getenv("NODE_NAME")
+	if nodeName == "" {
+		setupLog.Error(fmt.Errorf("NODE_NAME environment variable is not set"),
+			"NODE_NAME must be set via the Kubernetes Downward API (spec.nodeName)")
+		os.Exit(1)
+	}
+	setupLog.Info("Configuring cache field selector for local node", "nodeName", nodeName)
+
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
 		WebhookServer:          webhookServer,
 		HealthProbeBindAddress: probeAddr,
+		Cache: cache.Options{
+			ByObject: map[client.Object]cache.ByObject{
+				&metalk8sv1alpha1.DiscoveredPhysicalDisk{}: {
+					Field: fields.SelectorFromSet(fields.Set{
+						"spec.nodeName": nodeName,
+					}),
+				},
+			},
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
@@ -189,8 +214,9 @@ func main() {
 	}
 
 	if err := (&controller.DiscoveredPhysicalDiskReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
+		Client:   mgr.GetClient(),
+		Scheme:   mgr.GetScheme(),
+		NodeName: nodeName,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "DiscoveredPhysicalDisk")
 		os.Exit(1)

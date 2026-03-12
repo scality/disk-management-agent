@@ -31,6 +31,11 @@ import (
 type DiscoveredPhysicalDiskReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	// NodeName is the name of the Kubernetes node this agent is running on.
+	// The manager cache is configured with a field selector so that only
+	// DiscoveredPhysicalDisk resources whose spec.nodeName matches this value
+	// are watched and cached.
+	NodeName string
 }
 
 // +kubebuilder:rbac:groups=metalk8s.scality.com,resources=discoveredphysicaldisks,verbs=get;list;watch;create;update;patch;delete
