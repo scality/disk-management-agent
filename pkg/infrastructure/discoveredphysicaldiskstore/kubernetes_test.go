@@ -37,6 +37,7 @@ func init() {
 	_ = metalk8sv1alpha1.AddToScheme(testScheme)
 }
 
+//nolint:unparam // namespace is intentionally parameterized for reuse across test contexts.
 func newTestDisk(name, namespace string) *metalk8sv1alpha1.DiscoveredPhysicalDisk {
 	return &metalk8sv1alpha1.DiscoveredPhysicalDisk{
 		ObjectMeta: metav1.ObjectMeta{

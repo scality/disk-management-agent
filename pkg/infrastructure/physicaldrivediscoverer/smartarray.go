@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint:dupl // This function is similar to the one in the MegaRAID implementation.
 package physicaldrivediscoverer
 
 import (
@@ -49,13 +50,13 @@ func (d *SmartArray) DiscoverPhysicalDrives() ([]*domain.DiscoveredPhysicalDrive
 	for _, ctrl := range controllers {
 		pds, err := d.rc.PhysicalDrives(ctrl.Metadata)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to list physical drives for SmartArray controller %d", ctrl.Metadata.ID)
+			return nil, errors.Wrapf(err, "failed to list physical drives for SmartArray controller %d", ctrl.ID)
 		}
 
 		for _, pd := range pds {
 			drives = append(drives, &domain.DiscoveredPhysicalDrive{
 				ControllerType: smartArrayControllerType,
-				ControllerID:   ctrl.Metadata.ID,
+				ControllerID:   ctrl.ID,
 				PhysicalDrive:  pd,
 			})
 		}

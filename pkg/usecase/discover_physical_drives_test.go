@@ -139,7 +139,13 @@ func TestExecute_SSDDrivesOnly(t *testing.T) {
 		},
 	}
 	store := &mockStore{}
-	uc := NewDiscoverPhysicalDrives(logr.Discard(), []service.PhysicalDriveDiscoverer{discoverer}, store, "node-1", "default")
+	uc := NewDiscoverPhysicalDrives(
+		logr.Discard(),
+		[]service.PhysicalDriveDiscoverer{discoverer},
+		store,
+		"node-1",
+		"default",
+	)
 
 	existing, err := uc.Execute(context.Background())
 
@@ -157,7 +163,13 @@ func TestExecute_MixOfHDDAndSSD(t *testing.T) {
 		},
 	}
 	store := &mockStore{}
-	uc := NewDiscoverPhysicalDrives(logr.Discard(), []service.PhysicalDriveDiscoverer{discoverer}, store, "node-1", "default")
+	uc := NewDiscoverPhysicalDrives(
+		logr.Discard(),
+		[]service.PhysicalDriveDiscoverer{discoverer},
+		store,
+		"node-1",
+		"default",
+	)
 
 	existing, err := uc.Execute(context.Background())
 
@@ -178,7 +190,13 @@ func TestExecute_ExistingCR(t *testing.T) {
 			crName: {}, // non-nil means it exists
 		},
 	}
-	uc := NewDiscoverPhysicalDrives(logr.Discard(), []service.PhysicalDriveDiscoverer{discoverer}, store, "node-1", "default")
+	uc := NewDiscoverPhysicalDrives(
+		logr.Discard(),
+		[]service.PhysicalDriveDiscoverer{discoverer},
+		store,
+		"node-1",
+		"default",
+	)
 
 	existing, err := uc.Execute(context.Background())
 
@@ -190,7 +208,13 @@ func TestExecute_ExistingCR(t *testing.T) {
 func TestExecute_DiscovererError(t *testing.T) {
 	failingDiscoverer := &mockDiscoverer{err: fmt.Errorf("storcli not found")}
 	store := &mockStore{}
-	uc := NewDiscoverPhysicalDrives(logr.Discard(), []service.PhysicalDriveDiscoverer{failingDiscoverer}, store, "node-1", "default")
+	uc := NewDiscoverPhysicalDrives(
+		logr.Discard(),
+		[]service.PhysicalDriveDiscoverer{failingDiscoverer},
+		store,
+		"node-1",
+		"default",
+	)
 
 	existing, err := uc.Execute(context.Background())
 
@@ -204,7 +228,13 @@ func TestExecute_StoreGetError(t *testing.T) {
 		drives: []*domain.DiscoveredPhysicalDrive{newTestHDD("MegaRAID", 0, "0:1:2")},
 	}
 	store := &mockStore{getErr: fmt.Errorf("API server unavailable")}
-	uc := NewDiscoverPhysicalDrives(logr.Discard(), []service.PhysicalDriveDiscoverer{discoverer}, store, "node-1", "default")
+	uc := NewDiscoverPhysicalDrives(
+		logr.Discard(),
+		[]service.PhysicalDriveDiscoverer{discoverer},
+		store,
+		"node-1",
+		"default",
+	)
 
 	existing, err := uc.Execute(context.Background())
 
@@ -218,7 +248,13 @@ func TestExecute_StoreCreateError(t *testing.T) {
 		drives: []*domain.DiscoveredPhysicalDrive{newTestHDD("MegaRAID", 0, "0:1:2")},
 	}
 	store := &mockStore{createErr: fmt.Errorf("webhook rejected")}
-	uc := NewDiscoverPhysicalDrives(logr.Discard(), []service.PhysicalDriveDiscoverer{discoverer}, store, "node-1", "default")
+	uc := NewDiscoverPhysicalDrives(
+		logr.Discard(),
+		[]service.PhysicalDriveDiscoverer{discoverer},
+		store,
+		"node-1",
+		"default",
+	)
 
 	existing, err := uc.Execute(context.Background())
 

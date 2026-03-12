@@ -44,8 +44,7 @@ func NewDiscoverPhysicalDrives(
 	logger logr.Logger,
 	discoverers []service.PhysicalDriveDiscoverer,
 	store service.DiscoveredPhysicalDiskStore,
-	nodeName string,
-	namespace string,
+	nodeName, namespace string,
 ) *DiscoverPhysicalDrives {
 	return &DiscoverPhysicalDrives{
 		logger:      logger.WithName("discover-physical-drives"),
@@ -84,7 +83,7 @@ func (u *DiscoverPhysicalDrives) Execute(ctx context.Context) ([]string, error) 
 			u.nodeName,
 			drive.ControllerType,
 			drive.ControllerID,
-			drive.Metadata.ID,
+			drive.ID,
 		)
 
 		existing, err := u.store.Get(ctx, u.namespace, crName)
@@ -136,7 +135,10 @@ func (u *DiscoverPhysicalDrives) gatherDrives() []*domain.DiscoveredPhysicalDriv
 	return allDrives
 }
 
-func buildCR(name, namespace, nodeName string, drive *domain.DiscoveredPhysicalDrive) *metalk8sv1alpha1.DiscoveredPhysicalDisk {
+func buildCR(
+	name, namespace, nodeName string,
+	drive *domain.DiscoveredPhysicalDrive,
+) *metalk8sv1alpha1.DiscoveredPhysicalDisk {
 	slot := metalk8sv1alpha1.SlotLocation{}
 	if drive.Slot != nil {
 		slot.Port = drive.Slot.Port
@@ -155,7 +157,7 @@ func buildCR(name, namespace, nodeName string, drive *domain.DiscoveredPhysicalD
 				Type: drive.ControllerType,
 				ID:   drive.ControllerID,
 			},
-			ID:     drive.Metadata.ID,
+			ID:     drive.ID,
 			Slot:   slot,
 			Vendor: &drive.Vendor,
 			Model:  &drive.Model,
