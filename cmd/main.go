@@ -39,6 +39,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/certwatcher"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/metrics/filters"
@@ -213,14 +214,28 @@ func main() {
 		os.Exit(1)
 	}
 
+	tickerEvents := make(chan event.GenericEvent)
+
 	if err := (&controller.DiscoveredPhysicalDiskReconciler{
 		Client:   mgr.GetClient(),
 		Scheme:   mgr.GetScheme(),
 		NodeName: nodeName,
-	}).SetupWithManager(mgr); err != nil {
+	}).SetupWithManager(mgr, tickerEvents); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "DiscoveredPhysicalDisk")
 		os.Exit(1)
 	}
+
+	discoveryTicker := &controller.DiscoveryTicker{
+		Client:    mgr.GetClient(),
+		NodeName:  nodeName,
+		Interval:  controller.DefaultDiscoveryInterval,
+		EventChan: tickerEvents,
+	}
+	if err := mgr.Add(discoveryTicker); err != nil {
+		setupLog.Error(err, "unable to add discovery ticker to manager")
+		os.Exit(1)
+	}
+
 	// nolint:goconst
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		// Build the allowed service account identity from the pod's own namespace
