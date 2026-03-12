@@ -15,16 +15,16 @@ spec:
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
-    - jsonPath: .spec.id
-      name: ID
-      type: string
     - jsonPath: .spec.nodeName
       name: Node
       type: string
-    - jsonPath: .spec.type
+    - jsonPath: .status.available
+      name: Available
+      type: boolean
+    - jsonPath: .status.type
       name: Type
       type: string
-    - jsonPath: .spec.size
+    - jsonPath: .status.size
       name: Size
       type: integer
     - jsonPath: .status.status
@@ -54,7 +54,9 @@ spec:
           metadata:
             type: object
           spec:
-            description: DiscoveredPhysicalDiskSpec defines the desired state of DiscoveredPhysicalDisk.
+            description: |-
+              DiscoveredPhysicalDiskSpec defines the desired state of DiscoveredPhysicalDisk.
+              It contains only immutable slot identifiers set at creation time.
             properties:
               controller:
                 description: Controller identifies the RAID controller managing this
@@ -74,20 +76,10 @@ spec:
                 description: ID is the disk identifier as reported by the controller
                   (e.g. "0:1:2").
                 type: string
-              model:
-                description: Model is the disk model name.
-                type: string
               nodeName:
                 description: NodeName is the name of the node where this disk was
                   discovered.
                 type: string
-              serial:
-                description: Serial is the disk serial number.
-                type: string
-              size:
-                description: Size is the disk capacity in bytes.
-                format: int64
-                type: integer
               slot:
                 description: Slot describes the physical slot location of the disk.
                 properties:
@@ -105,6 +97,50 @@ spec:
                 - enclosure
                 - port
                 type: object
+            required:
+            - controller
+            - id
+            - nodeName
+            - slot
+            type: object
+          status:
+            description: DiscoveredPhysicalDiskStatus defines the observed state of
+              DiscoveredPhysicalDisk.
+            properties:
+              available:
+                description: Available indicates whether the physical drive is present
+                  in the slot.
+                type: boolean
+              devicePath:
+                description: DevicePath is the OS device path (e.g. "/dev/sda").
+                type: string
+              jbod:
+                description: JBOD indicates whether the disk is in JBOD (passthrough)
+                  mode.
+                type: boolean
+              model:
+                description: Model is the disk model name.
+                type: string
+              permanentPath:
+                description: PermanentPath is the stable device path (e.g. "/dev/disk/by-id/wwn-0x...").
+                type: string
+              reason:
+                description: Reason provides additional context for the current status.
+                type: string
+              serial:
+                description: Serial is the disk serial number.
+                type: string
+              size:
+                description: Size is the disk capacity in bytes.
+                format: int64
+                type: integer
+              status:
+                description: Status is the current disk status.
+                enum:
+                - Used
+                - Available
+                - Failed
+                type: string
               type:
                 description: Type is the disk media type.
                 enum:
@@ -117,38 +153,6 @@ spec:
                 type: string
               wwn:
                 description: WWN is the World Wide Name of the disk.
-                type: string
-            required:
-            - controller
-            - id
-            - nodeName
-            - size
-            - slot
-            - type
-            type: object
-          status:
-            description: DiscoveredPhysicalDiskStatus defines the observed state of
-              DiscoveredPhysicalDisk.
-            properties:
-              devicePath:
-                description: DevicePath is the OS device path (e.g. "/dev/sda").
-                type: string
-              jbod:
-                description: JBOD indicates whether the disk is in JBOD (passthrough)
-                  mode.
-                type: boolean
-              permanentPath:
-                description: PermanentPath is the stable device path (e.g. "/dev/disk/by-id/wwn-0x...").
-                type: string
-              reason:
-                description: Reason provides additional context for the current status.
-                type: string
-              status:
-                description: Status is the current disk status.
-                enum:
-                - Used
-                - Available
-                - Failed
                 type: string
             type: object
         type: object

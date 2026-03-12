@@ -31,10 +31,13 @@ import (
 // DiscoverPhysicalDrives orchestrates physical drive discovery across all
 // RAID controllers, filters out non-HDD drives, and ensures each drive
 // has a corresponding DiscoveredPhysicalDisk CR in Kubernetes.
+// It also populates the drive cache so that the reconciler can read the
+// latest discovered state.
 type DiscoverPhysicalDrives struct {
 	logger      logr.Logger
 	discoverers []service.PhysicalDriveDiscoverer
 	store       service.DiscoveredPhysicalDiskStore
+	cacheWriter service.DiscoveredDriveCacheWriter
 	nodeName    string
 	namespace   string
 }
@@ -44,12 +47,14 @@ func NewDiscoverPhysicalDrives(
 	logger logr.Logger,
 	discoverers []service.PhysicalDriveDiscoverer,
 	store service.DiscoveredPhysicalDiskStore,
+	cacheWriter service.DiscoveredDriveCacheWriter,
 	nodeName, namespace string,
 ) *DiscoverPhysicalDrives {
 	return &DiscoverPhysicalDrives{
 		logger:      logger.WithName("discover-physical-drives"),
 		discoverers: discoverers,
 		store:       store,
+		cacheWriter: cacheWriter,
 		nodeName:    nodeName,
 		namespace:   namespace,
 	}
@@ -64,28 +69,12 @@ func NewDiscoverPhysicalDrives(
 func (u *DiscoverPhysicalDrives) Execute(ctx context.Context) ([]string, error) {
 	allDrives := u.gatherDrives()
 
+	drivesByName := u.buildCacheMap(allDrives)
+	u.cacheWriter.Replace(drivesByName)
+
 	var existingCRNames []string
 
-	for _, drive := range allDrives {
-		if drive.Type != physicaldrive.DiskTypeHDD {
-			u.logger.V(1).Info(
-				"Skipping non-HDD drive",
-				"type", drive.Type.String(),
-				"slot", drive.Slot.Format(),
-				"controllerType", drive.ControllerType,
-				"controllerID", drive.ControllerID,
-			)
-
-			continue
-		}
-
-		crName := domain.ComputeCRName(
-			u.nodeName,
-			drive.ControllerType,
-			drive.ControllerID,
-			drive.ID,
-		)
-
+	for crName, drive := range drivesByName {
 		existing, err := u.store.Get(ctx, u.namespace, crName)
 		if err != nil {
 			u.logger.Error(err, "Failed to check DiscoveredPhysicalDisk existence", "name", crName)
@@ -112,6 +101,37 @@ func (u *DiscoverPhysicalDrives) Execute(ctx context.Context) ([]string, error) 
 	}
 
 	return existingCRNames, nil
+}
+
+// buildCacheMap filters HDD drives and returns them keyed by CR name.
+func (u *DiscoverPhysicalDrives) buildCacheMap(
+	allDrives []*domain.DiscoveredPhysicalDrive,
+) map[string]*domain.DiscoveredPhysicalDrive {
+	drivesByName := make(map[string]*domain.DiscoveredPhysicalDrive)
+
+	for _, drive := range allDrives {
+		if drive.Type != physicaldrive.DiskTypeHDD {
+			u.logger.V(1).Info(
+				"Skipping non-HDD drive",
+				"type", drive.Type.String(),
+				"slot", drive.Slot.Format(),
+				"controllerType", drive.ControllerType,
+				"controllerID", drive.ControllerID,
+			)
+
+			continue
+		}
+
+		crName := domain.ComputeCRName(
+			u.nodeName,
+			drive.ControllerType,
+			drive.ControllerID,
+			drive.ID,
+		)
+		drivesByName[crName] = drive
+	}
+
+	return drivesByName
 }
 
 // gatherDrives collects physical drives from all registered discoverers.
@@ -157,39 +177,8 @@ func buildCR(
 				Type: drive.ControllerType,
 				ID:   drive.ControllerID,
 			},
-			ID:     drive.ID,
-			Slot:   slot,
-			Vendor: &drive.Vendor,
-			Model:  &drive.Model,
-			Serial: &drive.Serial,
-			WWN:    &drive.WWN,
-			Size:   int64(drive.Size), //nolint:gosec // raidmgmt uses uint64 for size; overflow is not a concern for disk sizes
-			Type:   drive.Type.String(),
-		},
-		Status: metalk8sv1alpha1.DiscoveredPhysicalDiskStatus{
-			JBOD:          &drive.JBOD,
-			Status:        ptr(mapPDStatus(drive.Status)),
-			Reason:        &drive.Reason,
-			DevicePath:    &drive.DevicePath,
-			PermanentPath: &drive.PermanentPath,
+			ID:   drive.ID,
+			Slot: slot,
 		},
 	}
-}
-
-// mapPDStatus converts a raidmgmt PDStatus to the CRD status enum value.
-func mapPDStatus(status physicaldrive.PDStatus) string {
-	switch status {
-	case physicaldrive.PDStatusUsed:
-		return "Used"
-	case physicaldrive.PDStatusUnassignedGood:
-		return "Available"
-	case physicaldrive.PDStatusFailed, physicaldrive.PDStatusUnassignedBad:
-		return "Failed"
-	default:
-		return ""
-	}
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }

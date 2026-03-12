@@ -17,6 +17,7 @@ limitations under the License.
 package di
 
 import (
+	"disk-management-agent/pkg/infrastructure/discovereddrivecache"
 	"disk-management-agent/pkg/infrastructure/discoveredphysicaldiskstore"
 	"disk-management-agent/pkg/service"
 	"disk-management-agent/pkg/usecase"
@@ -28,6 +29,14 @@ func (c *Container) getDiscoveredPhysicalDiskStore() *discoveredphysicaldiskstor
 	}
 
 	return c.discoveredPhysicalDiskStore
+}
+
+func (c *Container) getDiscoveredDriveCache() *discovereddrivecache.InMemory {
+	if c.discoveredDriveCache == nil {
+		c.discoveredDriveCache = discovereddrivecache.NewInMemory()
+	}
+
+	return c.discoveredDriveCache
 }
 
 // GetDiscoverPhysicalDrivesUseCase returns the singleton use case instance.
@@ -43,10 +52,22 @@ func (c *Container) GetDiscoverPhysicalDrivesUseCase() *usecase.DiscoverPhysical
 			c.logger,
 			discoverers,
 			c.getDiscoveredPhysicalDiskStore(),
+			c.getDiscoveredDriveCache(),
 			c.nodeName,
 			c.namespace,
 		)
 	}
 
 	return c.discoverPhysicalDrivesUseCase
+}
+
+// GetReconcileDiscoveredPhysicalDiskUseCase returns the singleton reconcile use case.
+func (c *Container) GetReconcileDiscoveredPhysicalDiskUseCase() *usecase.ReconcileDiscoveredPhysicalDisk {
+	if c.reconcileDiscoveredPhysicalDiskUC == nil {
+		c.reconcileDiscoveredPhysicalDiskUC = usecase.NewReconcileDiscoveredPhysicalDisk(
+			c.getDiscoveredDriveCache(),
+		)
+	}
+
+	return c.reconcileDiscoveredPhysicalDiskUC
 }

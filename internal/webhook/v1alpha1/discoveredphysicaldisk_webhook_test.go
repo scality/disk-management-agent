@@ -56,8 +56,6 @@ func newTestDisk() *metalk8sv1alpha1.DiscoveredPhysicalDisk {
 				Enclosure: "1",
 				Bay:       "2",
 			},
-			Size: 4000787030016,
-			Type: "HDD",
 		},
 	}
 }

@@ -21,6 +21,8 @@ import (
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"github.com/scality/raidmgmt/pkg/domain/entities/physicaldrive"
+	"github.com/scality/raidmgmt/pkg/domain/entities/raidcontroller"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -28,6 +30,9 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/pkg/domain"
+	"disk-management-agent/pkg/infrastructure/discovereddrivecache"
+	"disk-management-agent/pkg/usecase"
 )
 
 // newDisk is a test helper that creates a DiscoveredPhysicalDisk resource.
@@ -51,14 +56,12 @@ func newDisk(name, namespace, nodeName string) *metalk8sv1alpha1.DiscoveredPhysi
 				Enclosure: "1",
 				Bay:       "2",
 			},
-			Size: 4000787030016,
-			Type: "HDD",
 		},
 	}
 }
 
 var _ = Describe("DiscoveredPhysicalDisk Controller", func() {
-	Context("When reconciling a resource", func() {
+	Context("When reconciling a resource with drive data in the cache", func() {
 		const resourceName = "test-resource"
 
 		ctx := context.Background()
@@ -87,18 +90,145 @@ var _ = Describe("DiscoveredPhysicalDisk Controller", func() {
 			Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
 		})
 
-		It("should successfully reconcile the resource", func() {
+		It("should fill the status fields from the cached drive data", func() {
+			By("populating the drive cache with test data")
+			cache := discovereddrivecache.NewInMemory()
+			cache.Replace(map[string]*domain.DiscoveredPhysicalDrive{
+				resourceName: {
+					ControllerType: "MegaRAID",
+					ControllerID:   0,
+					PhysicalDrive: &physicaldrive.PhysicalDrive{
+						Metadata: &physicaldrive.Metadata{
+							CtrlMetadata: &raidcontroller.Metadata{ID: 0},
+							ID:           "0:1:2",
+						},
+						Vendor: "Seagate",
+						Model:  "ST4000NM0033",
+						Serial: "Z1Z2Z3Z4",
+						WWN:    "5000C50012345678",
+						Size:   4000787030016,
+						Type:   physicaldrive.DiskTypeHDD,
+						Status: physicaldrive.PDStatusUsed,
+						JBOD:   true,
+						Reason: "part of logical volume",
+					},
+				},
+			})
+
 			By("Reconciling the created resource")
 			controllerReconciler := &DiscoveredPhysicalDiskReconciler{
-				Client:   k8sClient,
-				Scheme:   k8sClient.Scheme(),
-				NodeName: "node-1",
+				Client:           k8sClient,
+				Scheme:           k8sClient.Scheme(),
+				NodeName:         "node-1",
+				ReconcileUseCase: usecase.NewReconcileDiscoveredPhysicalDisk(cache),
 			}
 
 			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
 				NamespacedName: typeNamespacedName,
 			})
 			Expect(err).NotTo(HaveOccurred())
+
+			By("Verifying the status was updated")
+			updated := &metalk8sv1alpha1.DiscoveredPhysicalDisk{}
+			Expect(k8sClient.Get(ctx, typeNamespacedName, updated)).To(Succeed())
+
+			Expect(*updated.Status.Available).To(BeTrue())
+			Expect(*updated.Status.Vendor).To(Equal("Seagate"))
+			Expect(*updated.Status.Model).To(Equal("ST4000NM0033"))
+			Expect(*updated.Status.Serial).To(Equal("Z1Z2Z3Z4"))
+			Expect(*updated.Status.WWN).To(Equal("5000C50012345678"))
+			Expect(*updated.Status.Size).To(Equal(int64(4000787030016)))
+			Expect(*updated.Status.Type).To(Equal("HDD"))
+			Expect(*updated.Status.JBOD).To(BeTrue())
+			Expect(*updated.Status.Status).To(Equal("Used"))
+			Expect(*updated.Status.Reason).To(Equal("part of logical volume"))
+		})
+	})
+
+	Context("When reconciling with an empty cache (cache ready, drive not found)", func() {
+		const resourceName = "test-resource-unavailable"
+
+		ctx := context.Background()
+
+		typeNamespacedName := types.NamespacedName{
+			Name:      resourceName,
+			Namespace: "default",
+		}
+
+		BeforeEach(func() {
+			resource := newDisk(resourceName, "default", "node-1")
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+		})
+
+		AfterEach(func() {
+			resource := &metalk8sv1alpha1.DiscoveredPhysicalDisk{}
+			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			if err == nil {
+				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+			}
+		})
+
+		It("should set available to false", func() {
+			cache := discovereddrivecache.NewInMemory()
+			cache.Replace(map[string]*domain.DiscoveredPhysicalDrive{})
+
+			controllerReconciler := &DiscoveredPhysicalDiskReconciler{
+				Client:           k8sClient,
+				Scheme:           k8sClient.Scheme(),
+				NodeName:         "node-1",
+				ReconcileUseCase: usecase.NewReconcileDiscoveredPhysicalDisk(cache),
+			}
+
+			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+
+			updated := &metalk8sv1alpha1.DiscoveredPhysicalDisk{}
+			Expect(k8sClient.Get(ctx, typeNamespacedName, updated)).To(Succeed())
+
+			Expect(*updated.Status.Available).To(BeFalse())
+		})
+	})
+
+	Context("When reconciling before the cache is ready", func() {
+		const resourceName = "test-resource-cache-pending"
+
+		ctx := context.Background()
+
+		typeNamespacedName := types.NamespacedName{
+			Name:      resourceName,
+			Namespace: "default",
+		}
+
+		BeforeEach(func() {
+			resource := newDisk(resourceName, "default", "node-1")
+			Expect(k8sClient.Create(ctx, resource)).To(Succeed())
+		})
+
+		AfterEach(func() {
+			resource := &metalk8sv1alpha1.DiscoveredPhysicalDisk{}
+			err := k8sClient.Get(ctx, typeNamespacedName, resource)
+			if err == nil {
+				Expect(k8sClient.Delete(ctx, resource)).To(Succeed())
+			}
+		})
+
+		It("should requeue after a delay", func() {
+			cache := discovereddrivecache.NewInMemory()
+
+			controllerReconciler := &DiscoveredPhysicalDiskReconciler{
+				Client:           k8sClient,
+				Scheme:           k8sClient.Scheme(),
+				NodeName:         "node-1",
+				ReconcileUseCase: usecase.NewReconcileDiscoveredPhysicalDisk(cache),
+			}
+
+			result, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+				NamespacedName: typeNamespacedName,
+			})
+			Expect(err).NotTo(HaveOccurred())
+			Expect(result.RequeueAfter).To(Equal(cacheNotReadyRequeueDelay))
 		})
 	})
 
