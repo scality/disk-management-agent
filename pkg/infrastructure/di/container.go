@@ -23,9 +23,9 @@ import (
 	"github.com/scality/raidmgmt/pkg/implementation/raidcontroller/megaraid"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"platform-disk-management-agent/pkg/infrastructure/discoveredphysicaldiskstore"
-	"platform-disk-management-agent/pkg/infrastructure/physicaldrivediscoverer"
-	"platform-disk-management-agent/pkg/usecase"
+	"disk-management-agent/pkg/infrastructure/discoveredphysicaldiskstore"
+	"disk-management-agent/pkg/infrastructure/physicaldrivediscoverer"
+	"disk-management-agent/pkg/usecase"
 )
 
 type Container struct {

@@ -17,9 +17,9 @@ limitations under the License.
 package di
 
 import (
-	"platform-disk-management-agent/pkg/infrastructure/discoveredphysicaldiskstore"
-	"platform-disk-management-agent/pkg/service"
-	"platform-disk-management-agent/pkg/usecase"
+	"disk-management-agent/pkg/infrastructure/discoveredphysicaldiskstore"
+	"disk-management-agent/pkg/service"
+	"disk-management-agent/pkg/usecase"
 )
 
 func (c *Container) getDiscoveredPhysicalDiskStore() *discoveredphysicaldiskstore.Kubernetes {

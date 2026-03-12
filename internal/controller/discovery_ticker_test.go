@@ -25,7 +25,7 @@ import (
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
-	"platform-disk-management-agent/pkg/usecase"
+	"disk-management-agent/pkg/usecase"
 )
 
 var _ = Describe("DiscoveryTicker", func() {

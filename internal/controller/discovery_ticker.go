@@ -24,7 +24,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 
-	"platform-disk-management-agent/pkg/usecase"
+	"disk-management-agent/pkg/usecase"
 )
 
 // DefaultDiscoveryInterval is the default interval at which the discovery

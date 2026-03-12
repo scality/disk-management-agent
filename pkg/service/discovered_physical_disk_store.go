@@ -19,7 +19,7 @@ package service
 import (
 	"context"
 
-	metalk8sv1alpha1 "platform-disk-management-agent/api/v1alpha1"
+	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
 )
 
 // DiscoveredPhysicalDiskStore abstracts Kubernetes CRUD operations on

@@ -16,7 +16,7 @@ limitations under the License.
 
 package service
 
-import "platform-disk-management-agent/pkg/domain"
+import "disk-management-agent/pkg/domain"
 
 // PhysicalDriveDiscoverer discovers physical drives from RAID controllers.
 // Each implementation corresponds to a specific RAID controller adapter

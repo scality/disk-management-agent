@@ -19,7 +19,7 @@ package di
 import (
 	"github.com/scality/raidmgmt/pkg/core"
 
-	"platform-disk-management-agent/pkg/infrastructure/physicaldrivediscoverer"
+	"disk-management-agent/pkg/infrastructure/physicaldrivediscoverer"
 )
 
 func (c *Container) getMegaRAIDPerccliDiscoverer() *physicaldrivediscoverer.MegaRAID {

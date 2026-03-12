@@ -23,9 +23,9 @@ import (
 	"github.com/scality/raidmgmt/pkg/domain/entities/physicaldrive"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	metalk8sv1alpha1 "platform-disk-management-agent/api/v1alpha1"
-	"platform-disk-management-agent/pkg/domain"
-	"platform-disk-management-agent/pkg/service"
+	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/pkg/domain"
+	"disk-management-agent/pkg/service"
 )
 
 // DiscoverPhysicalDrives orchestrates physical drive discovery across all
@@ -157,19 +157,19 @@ func buildCR(name, namespace, nodeName string, drive *domain.DiscoveredPhysicalD
 			},
 			ID:     drive.Metadata.ID,
 			Slot:   slot,
-			Vendor: drive.Vendor,
-			Model:  drive.Model,
-			Serial: drive.Serial,
-			WWN:    drive.WWN,
+			Vendor: &drive.Vendor,
+			Model:  &drive.Model,
+			Serial: &drive.Serial,
+			WWN:    &drive.WWN,
 			Size:   int64(drive.Size), //nolint:gosec // raidmgmt uses uint64 for size; overflow is not a concern for disk sizes
 			Type:   drive.Type.String(),
 		},
 		Status: metalk8sv1alpha1.DiscoveredPhysicalDiskStatus{
-			JBOD:          drive.JBOD,
-			Status:        mapPDStatus(drive.Status),
-			Reason:        drive.Reason,
-			DevicePath:    drive.DevicePath,
-			PermanentPath: drive.PermanentPath,
+			JBOD:          &drive.JBOD,
+			Status:        ptr(mapPDStatus(drive.Status)),
+			Reason:        &drive.Reason,
+			DevicePath:    &drive.DevicePath,
+			PermanentPath: &drive.PermanentPath,
 		},
 	}
 }
@@ -186,4 +186,8 @@ func mapPDStatus(status physicaldrive.PDStatus) string {
 	default:
 		return ""
 	}
+}
+
+func ptr[T any](v T) *T {
+	return &v
 }

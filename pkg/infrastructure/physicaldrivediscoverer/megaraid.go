@@ -20,8 +20,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/scality/raidmgmt/pkg/domain/ports"
 
-	"platform-disk-management-agent/pkg/domain"
-	"platform-disk-management-agent/pkg/service"
+	"disk-management-agent/pkg/domain"
+	"disk-management-agent/pkg/service"
 )
 
 const megaraidControllerType = "MegaRAID"

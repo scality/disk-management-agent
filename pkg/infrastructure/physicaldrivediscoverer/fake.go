@@ -20,8 +20,8 @@ import (
 	"github.com/scality/raidmgmt/pkg/domain/entities/physicaldrive"
 	"github.com/scality/raidmgmt/pkg/domain/entities/raidcontroller"
 
-	"platform-disk-management-agent/pkg/domain"
-	"platform-disk-management-agent/pkg/service"
+	"disk-management-agent/pkg/domain"
+	"disk-management-agent/pkg/service"
 )
 
 // Fake implements PhysicalDriveDiscoverer with hardcoded drives for

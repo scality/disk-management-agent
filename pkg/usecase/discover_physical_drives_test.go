@@ -27,9 +27,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	metalk8sv1alpha1 "platform-disk-management-agent/api/v1alpha1"
-	"platform-disk-management-agent/pkg/domain"
-	"platform-disk-management-agent/pkg/service"
+	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/pkg/domain"
+	"disk-management-agent/pkg/service"
 )
 
 // --- Hand-written mocks ---
@@ -49,9 +49,9 @@ type mockStore struct {
 	getCalls    []string
 	createCalls []*metalk8sv1alpha1.DiscoveredPhysicalDisk
 
-	getResults    map[string]*metalk8sv1alpha1.DiscoveredPhysicalDisk
-	getErr        error
-	createErr     error
+	getResults map[string]*metalk8sv1alpha1.DiscoveredPhysicalDisk
+	getErr     error
+	createErr  error
 }
 
 var _ service.DiscoveredPhysicalDiskStore = &mockStore{}
@@ -296,17 +296,17 @@ func TestBuildCR(t *testing.T) {
 	assert.Equal(t, "0", cr.Spec.Slot.Port)
 	assert.Equal(t, "1", cr.Spec.Slot.Enclosure)
 	assert.Equal(t, "2", cr.Spec.Slot.Bay)
-	assert.Equal(t, "Seagate", cr.Spec.Vendor)
-	assert.Equal(t, "ST4000NM0033", cr.Spec.Model)
-	assert.Equal(t, "Z1Z2Z3Z4", cr.Spec.Serial)
-	assert.Equal(t, "5000C50012345678", cr.Spec.WWN)
+	assert.Equal(t, "Seagate", *cr.Spec.Vendor)
+	assert.Equal(t, "ST4000NM0033", *cr.Spec.Model)
+	assert.Equal(t, "Z1Z2Z3Z4", *cr.Spec.Serial)
+	assert.Equal(t, "5000C50012345678", *cr.Spec.WWN)
 	assert.Equal(t, int64(4000787030016), cr.Spec.Size)
 	assert.Equal(t, "HDD", cr.Spec.Type)
 
-	assert.True(t, cr.Status.JBOD)
-	assert.Equal(t, "Used", cr.Status.Status)
-	assert.Equal(t, "/dev/sda", cr.Status.DevicePath)
-	assert.Equal(t, "/dev/disk/by-id/wwn-0x5000c50012345678", cr.Status.PermanentPath)
+	assert.True(t, *cr.Status.JBOD)
+	assert.Equal(t, "Used", *cr.Status.Status)
+	assert.Equal(t, "/dev/sda", *cr.Status.DevicePath)
+	assert.Equal(t, "/dev/disk/by-id/wwn-0x5000c50012345678", *cr.Status.PermanentPath)
 }
 
 func TestBuildCR_NilSlot(t *testing.T) {

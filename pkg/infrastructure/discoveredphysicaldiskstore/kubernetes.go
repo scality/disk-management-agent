@@ -23,8 +23,8 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	metalk8sv1alpha1 "platform-disk-management-agent/api/v1alpha1"
-	"platform-disk-management-agent/pkg/service"
+	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/pkg/service"
 )
 
 // Kubernetes implements DiscoveredPhysicalDiskStore using the controller-runtime
