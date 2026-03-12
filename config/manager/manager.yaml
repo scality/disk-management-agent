@@ -76,8 +76,6 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
-          - name: FAKE_DISCOVERY
-            value: "false"
         ports: []
         securityContext:
           allowPrivilegeEscalation: false
