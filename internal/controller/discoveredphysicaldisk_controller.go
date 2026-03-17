@@ -101,6 +101,8 @@ func mapDriveToStatus(status *metalk8sv1alpha1.DiscoveredPhysicalDiskStatus, res
 	status.JBOD = &drive.JBOD
 	status.Status = ptr(mapPDStatus(drive.Status))
 	status.Reason = &drive.Reason
+	status.DevicePath = &drive.DevicePath
+	status.PermanentPath = &drive.PermanentPath
 }
 
 func mapPDStatus(status physicaldrive.PDStatus) string {

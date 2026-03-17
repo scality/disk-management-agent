@@ -34,29 +34,33 @@ import (
 // It also populates the drive cache so that the reconciler can read the
 // latest discovered state.
 type DiscoverPhysicalDrives struct {
-	logger      logr.Logger
-	discoverers []service.PhysicalDriveDiscoverer
-	store       service.DiscoveredPhysicalDiskStore
-	cacheWriter service.DiscoveredDriveCacheWriter
-	nodeName    string
-	namespace   string
+	logger        logr.Logger
+	pdDiscoverers []service.PhysicalDriveDiscoverer
+	lvDiscoverers []service.LogicalVolumeDiscoverer
+	store         service.DiscoveredPhysicalDiskStore
+	cacheWriter   service.DiscoveredDriveCacheWriter
+	nodeName      string
+	namespace     string
 }
 
 // NewDiscoverPhysicalDrives creates a new DiscoverPhysicalDrives use case.
 func NewDiscoverPhysicalDrives(
 	logger logr.Logger,
-	discoverers []service.PhysicalDriveDiscoverer,
+	pdDiscoverers []service.PhysicalDriveDiscoverer,
+	lvDiscoverers []service.LogicalVolumeDiscoverer,
 	store service.DiscoveredPhysicalDiskStore,
 	cacheWriter service.DiscoveredDriveCacheWriter,
-	nodeName, namespace string,
+	nodeName string,
+	namespace string,
 ) *DiscoverPhysicalDrives {
 	return &DiscoverPhysicalDrives{
-		logger:      logger.WithName("discover-physical-drives"),
-		discoverers: discoverers,
-		store:       store,
-		cacheWriter: cacheWriter,
-		nodeName:    nodeName,
-		namespace:   namespace,
+		logger:        logger.WithName("discover-physical-drives"),
+		pdDiscoverers: pdDiscoverers,
+		lvDiscoverers: lvDiscoverers,
+		store:         store,
+		cacheWriter:   cacheWriter,
+		nodeName:      nodeName,
+		namespace:     namespace,
 	}
 }
 
@@ -68,6 +72,9 @@ func NewDiscoverPhysicalDrives(
 // watch.
 func (u *DiscoverPhysicalDrives) Execute(ctx context.Context) ([]string, error) {
 	allDrives := u.gatherDrives()
+	allLVs := u.gatherLogicalVolumes()
+
+	u.enrichDrivePaths(allDrives, allLVs)
 
 	drivesByName := u.buildCacheMap(allDrives)
 	u.cacheWriter.Replace(drivesByName)
@@ -141,7 +148,11 @@ func (u *DiscoverPhysicalDrives) buildCacheMap(
 func (u *DiscoverPhysicalDrives) gatherDrives() []*domain.DiscoveredPhysicalDrive {
 	var allDrives []*domain.DiscoveredPhysicalDrive
 
-	for _, discoverer := range u.discoverers {
+	for _, discoverer := range u.pdDiscoverers {
+		if discoverer == nil {
+			continue
+		}
+
 		drives, err := discoverer.DiscoverPhysicalDrives()
 		if err != nil {
 			u.logger.V(1).Info("Discoverer returned an error, skipping", "error", err)
@@ -153,6 +164,81 @@ func (u *DiscoverPhysicalDrives) gatherDrives() []*domain.DiscoveredPhysicalDriv
 	}
 
 	return allDrives
+}
+
+// gatherLogicalVolumes collects logical volumes from all registered LV
+// discoverers. The same error-skipping policy as gatherDrives applies.
+func (u *DiscoverPhysicalDrives) gatherLogicalVolumes() []*domain.DiscoveredLogicalVolume {
+	var allLVs []*domain.DiscoveredLogicalVolume
+
+	for _, discoverer := range u.lvDiscoverers {
+		lvs, err := discoverer.DiscoverLogicalVolumes()
+		if err != nil {
+			u.logger.V(1).Info("LV discoverer returned an error, skipping", "error", err)
+
+			continue
+		}
+
+		allLVs = append(allLVs, lvs...)
+	}
+
+	return allLVs
+}
+
+// enrichDrivePaths populates DevicePath and PermanentPath on physical
+// drives that don't already have them by finding the RAID logical volume
+// that contains each drive and copying the LV's paths.
+func (u *DiscoverPhysicalDrives) enrichDrivePaths(
+	drives []*domain.DiscoveredPhysicalDrive,
+	lvs []*domain.DiscoveredLogicalVolume,
+) {
+	for _, drive := range drives {
+		if drive.DevicePath != "" && drive.PermanentPath != "" {
+			continue
+		}
+
+		lv := findMatchingLogicalVolume(drive, lvs)
+		if lv == nil {
+			u.logger.V(1).Info(
+				"No matching logical volume found for drive, paths will be empty",
+				"controllerType", drive.ControllerType,
+				"controllerID", drive.ControllerID,
+				"driveID", drive.ID,
+			)
+
+			continue
+		}
+
+		if drive.DevicePath == "" {
+			drive.DevicePath = lv.DevicePath
+		}
+
+		if drive.PermanentPath == "" {
+			drive.PermanentPath = lv.PermanentPath
+		}
+	}
+}
+
+// findMatchingLogicalVolume returns the logical volume that contains the
+// given physical drive, or nil if none match. Matching is done on
+// controller type, controller ID and physical drive ID.
+func findMatchingLogicalVolume(
+	drive *domain.DiscoveredPhysicalDrive,
+	lvs []*domain.DiscoveredLogicalVolume,
+) *domain.DiscoveredLogicalVolume {
+	for _, lv := range lvs {
+		if lv.ControllerType != drive.ControllerType || lv.ControllerID != drive.ControllerID {
+			continue
+		}
+
+		for _, pdMeta := range lv.PDrivesMetadata {
+			if pdMeta.ID == drive.ID {
+				return lv
+			}
+		}
+	}
+
+	return nil
 }
 
 func buildCR(

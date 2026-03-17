@@ -42,15 +42,22 @@ func (c *Container) getDiscoveredDriveCache() *discovereddrivecache.InMemory {
 // GetDiscoverPhysicalDrivesUseCase returns the singleton use case instance.
 func (c *Container) GetDiscoverPhysicalDrivesUseCase() *usecase.DiscoverPhysicalDrives {
 	if c.discoverPhysicalDrivesUseCase == nil {
-		discoverers := []service.PhysicalDriveDiscoverer{
+		pdDiscoverers := []service.PhysicalDriveDiscoverer{
 			c.getMegaRAIDPerccliDiscoverer(),
 			c.getMegaRAIDStorcliDiscoverer(),
 			c.getSmartArrayDiscoverer(),
 		}
 
+		lvDiscoverers := []service.LogicalVolumeDiscoverer{
+			c.getMegaRAIDPerccliLVDiscoverer(),
+			c.getMegaRAIDStorcliLVDiscoverer(),
+			c.getSmartArrayLVDiscoverer(),
+		}
+
 		c.discoverPhysicalDrivesUseCase = usecase.NewDiscoverPhysicalDrives(
 			c.logger,
-			discoverers,
+			pdDiscoverers,
+			lvDiscoverers,
 			c.getDiscoveredPhysicalDiskStore(),
 			c.getDiscoveredDriveCache(),
 			c.nodeName,
