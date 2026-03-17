@@ -36,6 +36,10 @@ type Container struct {
 	nodeName  string
 	namespace string
 
+	storcliPath string
+	perccliPath string
+	ssacliPath  string
+
 	megaraidPerccliCommandRunner *megaraid.MegaRAIDRunner
 	megaraidStorcliCommandRunner *megaraid.MegaRAIDRunner
 	ssacliCommandRunner          *commandrunner.SSACLI
@@ -65,11 +69,17 @@ func NewContainer(
 	k8sClient client.Client,
 	nodeName string,
 	namespace string,
+	storcliPath string,
+	perccliPath string,
+	ssacliPath string,
 ) *Container {
 	return &Container{
-		logger:    logger,
-		k8sClient: k8sClient,
-		nodeName:  nodeName,
-		namespace: namespace,
+		logger:      logger,
+		k8sClient:   k8sClient,
+		nodeName:    nodeName,
+		namespace:   namespace,
+		storcliPath: storcliPath,
+		perccliPath: perccliPath,
+		ssacliPath:  ssacliPath,
 	}
 }

@@ -57,6 +57,14 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+
+	return defaultValue
+}
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -222,6 +230,9 @@ func main() {
 		mgr.GetClient(),
 		nodeName,
 		podNamespace,
+		getEnvOrDefault("STORCLI_PATH", "/host/libexec/MegaRAID/storcli/storcli64"),
+		getEnvOrDefault("PERCCLI_PATH", "/host/libexec/MegaRAID/perccli/perccli64"),
+		getEnvOrDefault("SSACLI_PATH", "/host/libexec/ssacli"),
 	)
 	discoverUseCase := container.GetDiscoverPhysicalDrivesUseCase()
 	reconcileUseCase := container.GetReconcileDiscoveredPhysicalDiskUseCase()
