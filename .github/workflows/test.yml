@@ -1,8 +1,7 @@
 name: Tests
 
 on:
-  push:
-  pull_request:
+  workflow_call:
 
 jobs:
   test:
@@ -10,13 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone the code
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@v6
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-
       - name: Running Tests
         run: |
           go mod tidy

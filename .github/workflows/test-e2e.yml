@@ -1,8 +1,7 @@
 name: E2E Tests
 
 on:
-  push:
-  pull_request:
+  workflow_call:
 
 jobs:
   test-e2e:
@@ -10,13 +9,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Clone the code
-        uses: actions/checkout@v4
-
+        uses: actions/checkout@v6
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: go.mod
-
       - name: Install the latest version of kind
         run: |
           curl -Lo ./kind https://kind.sigs.k8s.io/dl/latest/kind-linux-amd64
@@ -29,4 +26,4 @@ jobs:
       - name: Running Test e2e
         run: |
           go mod tidy
-          # make test-e2e
+          #make test-e2e
