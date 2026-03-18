@@ -56,7 +56,7 @@ type mockStore struct {
 
 var _ service.DiscoveredPhysicalDiskStore = &mockStore{}
 
-func (m *mockStore) Get(_ context.Context, _, name string) (*metalk8sv1alpha1.DiscoveredPhysicalDisk, error) {
+func (m *mockStore) Get(_ context.Context, name string) (*metalk8sv1alpha1.DiscoveredPhysicalDisk, error) {
 	m.getCalls = append(m.getCalls, name)
 
 	if m.getErr != nil {
@@ -121,7 +121,7 @@ func newTestSSD(ctrlType string, ctrlID int, slotID string) *domain.DiscoveredPh
 
 func TestExecute_NoDiscoverers(t *testing.T) {
 	store := &mockStore{}
-	uc := NewDiscoverPhysicalDrives(logr.Discard(), nil, store, "node-1", "default")
+	uc := NewDiscoverPhysicalDrives(logr.Discard(), nil, store, "node-1")
 
 	existing, err := uc.Execute(context.Background())
 
@@ -144,7 +144,6 @@ func TestExecute_SSDDrivesOnly(t *testing.T) {
 		[]service.PhysicalDriveDiscoverer{discoverer},
 		store,
 		"node-1",
-		"default",
 	)
 
 	existing, err := uc.Execute(context.Background())
@@ -168,7 +167,6 @@ func TestExecute_MixOfHDDAndSSD(t *testing.T) {
 		[]service.PhysicalDriveDiscoverer{discoverer},
 		store,
 		"node-1",
-		"default",
 	)
 
 	existing, err := uc.Execute(context.Background())
@@ -177,12 +175,12 @@ func TestExecute_MixOfHDDAndSSD(t *testing.T) {
 	assert.Empty(t, existing)
 	assert.Len(t, store.getCalls, 1)
 	assert.Len(t, store.createCalls, 1)
-	assert.Equal(t, "node-1-megaraid-0-012", store.createCalls[0].Name)
+	assert.Equal(t, "node-1-megaraid-0-0-1-2", store.createCalls[0].Name)
 }
 
 func TestExecute_ExistingCR(t *testing.T) {
 	hdd := newTestHDD("MegaRAID", 0, "0:1:2")
-	crName := "node-1-megaraid-0-012"
+	crName := "node-1-megaraid-0-0-1-2"
 
 	discoverer := &mockDiscoverer{drives: []*domain.DiscoveredPhysicalDrive{hdd}}
 	store := &mockStore{
@@ -195,7 +193,6 @@ func TestExecute_ExistingCR(t *testing.T) {
 		[]service.PhysicalDriveDiscoverer{discoverer},
 		store,
 		"node-1",
-		"default",
 	)
 
 	existing, err := uc.Execute(context.Background())
@@ -213,7 +210,6 @@ func TestExecute_DiscovererError(t *testing.T) {
 		[]service.PhysicalDriveDiscoverer{failingDiscoverer},
 		store,
 		"node-1",
-		"default",
 	)
 
 	existing, err := uc.Execute(context.Background())
@@ -233,7 +229,6 @@ func TestExecute_StoreGetError(t *testing.T) {
 		[]service.PhysicalDriveDiscoverer{discoverer},
 		store,
 		"node-1",
-		"default",
 	)
 
 	existing, err := uc.Execute(context.Background())
@@ -253,7 +248,6 @@ func TestExecute_StoreCreateError(t *testing.T) {
 		[]service.PhysicalDriveDiscoverer{discoverer},
 		store,
 		"node-1",
-		"default",
 	)
 
 	existing, err := uc.Execute(context.Background())
@@ -276,7 +270,6 @@ func TestExecute_MultipleDiscoverers(t *testing.T) {
 		[]service.PhysicalDriveDiscoverer{megaraidDiscoverer, smartArrayDiscoverer},
 		store,
 		"node-1",
-		"default",
 	)
 
 	existing, err := uc.Execute(context.Background())
@@ -286,29 +279,8 @@ func TestExecute_MultipleDiscoverers(t *testing.T) {
 	assert.Len(t, store.createCalls, 2)
 
 	createdNames := []string{store.createCalls[0].Name, store.createCalls[1].Name}
-	assert.Contains(t, createdNames, "node-1-megaraid-0-012")
-	assert.Contains(t, createdNames, "node-1-smartarray-1-1i14")
-}
-
-// --- mapPDStatus tests ---
-
-func TestMapPDStatus(t *testing.T) {
-	tests := []struct {
-		status   physicaldrive.PDStatus
-		expected string
-	}{
-		{physicaldrive.PDStatusUsed, "Used"},
-		{physicaldrive.PDStatusUnassignedGood, "Available"},
-		{physicaldrive.PDStatusFailed, "Failed"},
-		{physicaldrive.PDStatusUnassignedBad, "Failed"},
-		{physicaldrive.PDStatusUnknown, ""},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.expected, func(t *testing.T) {
-			assert.Equal(t, tt.expected, mapPDStatus(tt.status))
-		})
-	}
+	assert.Contains(t, createdNames, "node-1-megaraid-0-0-1-2")
+	assert.Contains(t, createdNames, "node-1-smartarray-1-1i-1-4")
 }
 
 // --- buildCR tests ---
@@ -316,14 +288,10 @@ func TestMapPDStatus(t *testing.T) {
 func TestBuildCR(t *testing.T) {
 	drive := newTestHDD("MegaRAID", 0, "0:1:2")
 	drive.WWN = "5000C50012345678"
-	drive.JBOD = true
-	drive.DevicePath = "/dev/sda"
-	drive.PermanentPath = "/dev/disk/by-id/wwn-0x5000c50012345678"
 
-	cr := buildCR("node-1-megaraid-0-012", "default", "node-1", drive)
+	cr := buildCR("node-1-megaraid-0-0-1-2", "node-1", drive)
 
-	assert.Equal(t, "node-1-megaraid-0-012", cr.Name)
-	assert.Equal(t, "default", cr.Namespace)
+	assert.Equal(t, "node-1-megaraid-0-0-1-2", cr.Name)
 
 	assert.Equal(t, "node-1", cr.Spec.NodeName)
 	assert.Equal(t, "MegaRAID", cr.Spec.Controller.Type)
@@ -338,18 +306,13 @@ func TestBuildCR(t *testing.T) {
 	assert.Equal(t, "5000C50012345678", *cr.Spec.WWN)
 	assert.Equal(t, int64(4000787030016), cr.Spec.Size)
 	assert.Equal(t, "HDD", cr.Spec.Type)
-
-	assert.True(t, *cr.Status.JBOD)
-	assert.Equal(t, "Used", *cr.Status.Status)
-	assert.Equal(t, "/dev/sda", *cr.Status.DevicePath)
-	assert.Equal(t, "/dev/disk/by-id/wwn-0x5000c50012345678", *cr.Status.PermanentPath)
 }
 
 func TestBuildCR_NilSlot(t *testing.T) {
 	drive := newTestHDD("MegaRAID", 0, "5")
 	drive.Slot = nil
 
-	cr := buildCR("node-1-megaraid-0-5", "default", "node-1", drive)
+	cr := buildCR("node-1-megaraid-0-5", "node-1", drive)
 
 	assert.Equal(t, "", cr.Spec.Slot.Port)
 	assert.Equal(t, "", cr.Spec.Slot.Enclosure)

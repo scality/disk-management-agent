@@ -37,12 +37,10 @@ func init() {
 	_ = metalk8sv1alpha1.AddToScheme(testScheme)
 }
 
-//nolint:unparam // namespace is intentionally parameterized for reuse across test contexts.
-func newTestDisk(name, namespace string) *metalk8sv1alpha1.DiscoveredPhysicalDisk {
+func newTestDisk(name string) *metalk8sv1alpha1.DiscoveredPhysicalDisk {
 	return &metalk8sv1alpha1.DiscoveredPhysicalDisk{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name: name,
 		},
 		Spec: metalk8sv1alpha1.DiscoveredPhysicalDiskSpec{
 			NodeName: "node-1",
@@ -59,11 +57,11 @@ func newTestDisk(name, namespace string) *metalk8sv1alpha1.DiscoveredPhysicalDis
 }
 
 func TestGet_Exists(t *testing.T) {
-	seed := newTestDisk("disk-1", "default")
+	seed := newTestDisk("disk-1")
 	k8s := fake.NewClientBuilder().WithScheme(testScheme).WithObjects(seed).Build()
 	store := NewKubernetes(k8s)
 
-	result, err := store.Get(context.Background(), "default", "disk-1")
+	result, err := store.Get(context.Background(), "disk-1")
 
 	require.NoError(t, err)
 	require.NotNil(t, result)
@@ -75,7 +73,7 @@ func TestGet_NotFound(t *testing.T) {
 	k8s := fake.NewClientBuilder().WithScheme(testScheme).Build()
 	store := NewKubernetes(k8s)
 
-	result, err := store.Get(context.Background(), "default", "nonexistent")
+	result, err := store.Get(context.Background(), "nonexistent")
 
 	require.NoError(t, err)
 	assert.Nil(t, result)
@@ -84,12 +82,12 @@ func TestGet_NotFound(t *testing.T) {
 func TestCreate_Success(t *testing.T) {
 	k8s := fake.NewClientBuilder().WithScheme(testScheme).Build()
 	store := NewKubernetes(k8s)
-	disk := newTestDisk("disk-new", "default")
+	disk := newTestDisk("disk-new")
 
 	err := store.Create(context.Background(), disk)
 	require.NoError(t, err)
 
-	got, err := store.Get(context.Background(), "default", "disk-new")
+	got, err := store.Get(context.Background(), "disk-new")
 	require.NoError(t, err)
 	require.NotNil(t, got)
 	assert.Equal(t, "disk-new", got.Name)
@@ -97,11 +95,11 @@ func TestCreate_Success(t *testing.T) {
 }
 
 func TestCreate_AlreadyExists(t *testing.T) {
-	seed := newTestDisk("disk-dup", "default")
+	seed := newTestDisk("disk-dup")
 	k8s := fake.NewClientBuilder().WithScheme(testScheme).WithObjects(seed).Build()
 	store := NewKubernetes(k8s)
 
-	dup := newTestDisk("disk-dup", "default")
+	dup := newTestDisk("disk-dup")
 	err := store.Create(context.Background(), dup)
 
 	require.Error(t, err)

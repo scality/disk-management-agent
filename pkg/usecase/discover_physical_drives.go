@@ -36,7 +36,6 @@ type DiscoverPhysicalDrives struct {
 	discoverers []service.PhysicalDriveDiscoverer
 	store       service.DiscoveredPhysicalDiskStore
 	nodeName    string
-	namespace   string
 }
 
 // NewDiscoverPhysicalDrives creates a new DiscoverPhysicalDrives use case.
@@ -44,14 +43,13 @@ func NewDiscoverPhysicalDrives(
 	logger logr.Logger,
 	discoverers []service.PhysicalDriveDiscoverer,
 	store service.DiscoveredPhysicalDiskStore,
-	nodeName, namespace string,
+	nodeName string,
 ) *DiscoverPhysicalDrives {
 	return &DiscoverPhysicalDrives{
 		logger:      logger.WithName("discover-physical-drives"),
 		discoverers: discoverers,
 		store:       store,
 		nodeName:    nodeName,
-		namespace:   namespace,
 	}
 }
 
@@ -86,7 +84,7 @@ func (u *DiscoverPhysicalDrives) Execute(ctx context.Context) ([]string, error) 
 			drive.ID,
 		)
 
-		existing, err := u.store.Get(ctx, u.namespace, crName)
+		existing, err := u.store.Get(ctx, crName)
 		if err != nil {
 			u.logger.Error(err, "Failed to check DiscoveredPhysicalDisk existence", "name", crName)
 
@@ -100,7 +98,7 @@ func (u *DiscoverPhysicalDrives) Execute(ctx context.Context) ([]string, error) 
 			continue
 		}
 
-		cr := buildCR(crName, u.namespace, u.nodeName, drive)
+		cr := buildCR(crName, u.nodeName, drive)
 
 		if err := u.store.Create(ctx, cr); err != nil {
 			u.logger.Error(err, "Failed to create DiscoveredPhysicalDisk", "name", crName)
@@ -136,7 +134,7 @@ func (u *DiscoverPhysicalDrives) gatherDrives() []*domain.DiscoveredPhysicalDriv
 }
 
 func buildCR(
-	name, namespace, nodeName string,
+	name, nodeName string,
 	drive *domain.DiscoveredPhysicalDrive,
 ) *metalk8sv1alpha1.DiscoveredPhysicalDisk {
 	slot := metalk8sv1alpha1.SlotLocation{}
@@ -148,8 +146,7 @@ func buildCR(
 
 	return &metalk8sv1alpha1.DiscoveredPhysicalDisk{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name: name,
 		},
 		Spec: metalk8sv1alpha1.DiscoveredPhysicalDiskSpec{
 			NodeName: nodeName,
@@ -166,30 +163,5 @@ func buildCR(
 			Size:   int64(drive.Size), //nolint:gosec // raidmgmt uses uint64 for size; overflow is not a concern for disk sizes
 			Type:   drive.Type.String(),
 		},
-		Status: metalk8sv1alpha1.DiscoveredPhysicalDiskStatus{
-			JBOD:          &drive.JBOD,
-			Status:        ptr(mapPDStatus(drive.Status)),
-			Reason:        &drive.Reason,
-			DevicePath:    &drive.DevicePath,
-			PermanentPath: &drive.PermanentPath,
-		},
 	}
-}
-
-// mapPDStatus converts a raidmgmt PDStatus to the CRD status enum value.
-func mapPDStatus(status physicaldrive.PDStatus) string {
-	switch status {
-	case physicaldrive.PDStatusUsed:
-		return "Used"
-	case physicaldrive.PDStatusUnassignedGood:
-		return "Available"
-	case physicaldrive.PDStatusFailed, physicaldrive.PDStatusUnassignedBad:
-		return "Failed"
-	default:
-		return ""
-	}
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }

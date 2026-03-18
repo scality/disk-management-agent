@@ -38,7 +38,7 @@ var _ = Describe("DiscoveryTicker", func() {
 				NodeName:  "test-node",
 				Interval:  100 * time.Millisecond,
 				EventChan: eventChan,
-				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node", "default"),
+				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node"),
 			}
 
 			done := make(chan error, 1)
@@ -62,7 +62,7 @@ var _ = Describe("DiscoveryTicker", func() {
 				NodeName:  "test-node",
 				Interval:  50 * time.Millisecond,
 				EventChan: eventChan,
-				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node", "default"),
+				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node"),
 			}
 
 			tickCount := 0
@@ -102,7 +102,7 @@ var _ = Describe("DiscoveryTicker", func() {
 				NodeName:  "test-node",
 				Interval:  time.Hour, // Long interval; should not matter.
 				EventChan: eventChan,
-				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node", "default"),
+				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node"),
 			}
 
 			done := make(chan error, 1)
