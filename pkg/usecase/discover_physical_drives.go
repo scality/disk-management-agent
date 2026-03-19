@@ -46,6 +46,7 @@ func NewDiscoverPhysicalDrives(
 	logger logr.Logger,
 	discoverers []service.PhysicalDriveDiscoverer,
 	store service.DiscoveredPhysicalDiskStore,
+	cacheWriter service.DiscoveredDriveCacheWriter,
 	nodeName string,
 ) *DiscoverPhysicalDrives {
 	return &DiscoverPhysicalDrives{
@@ -71,6 +72,7 @@ func (u *DiscoverPhysicalDrives) Execute(ctx context.Context) ([]string, error) 
 
 	var existingCRNames []string
 
+	for crName, drive := range drivesByName {
 		existing, err := u.store.Get(ctx, crName)
 		if err != nil {
 			u.logger.Error(err, "Failed to check DiscoveredPhysicalDisk existence", "name", crName)

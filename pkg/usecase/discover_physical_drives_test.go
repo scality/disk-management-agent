@@ -131,7 +131,8 @@ func newTestSSD(ctrlType string, ctrlID int, slotID string) *domain.DiscoveredPh
 
 func TestExecute_NoDiscoverers(t *testing.T) {
 	store := &mockStore{}
-	uc := NewDiscoverPhysicalDrives(logr.Discard(), nil, store, "node-1")
+	cacheWriter := &mockCacheWriter{}
+	uc := NewDiscoverPhysicalDrives(logr.Discard(), nil, store, cacheWriter, "node-1")
 
 	existing, err := uc.Execute(context.Background())
 
@@ -139,8 +140,8 @@ func TestExecute_NoDiscoverers(t *testing.T) {
 	assert.Empty(t, existing)
 	assert.Empty(t, store.getCalls)
 	assert.Empty(t, store.createCalls)
-	require.Len(t, cache.replaceCalls, 1, "Cache should be populated even with no drives")
-	assert.Empty(t, cache.replaceCalls[0])
+	require.Len(t, cacheWriter.replaceCalls, 1, "Cache should be populated even with no drives")
+	assert.Empty(t, cacheWriter.replaceCalls[0])
 }
 
 func TestExecute_SSDDrivesOnly(t *testing.T) {
@@ -328,12 +329,12 @@ func TestBuildCR(t *testing.T) {
 	assert.Equal(t, "0", cr.Spec.Slot.Port)
 	assert.Equal(t, "1", cr.Spec.Slot.Enclosure)
 	assert.Equal(t, "2", cr.Spec.Slot.Bay)
-	assert.Equal(t, "Seagate", *cr.Spec.Vendor)
-	assert.Equal(t, "ST4000NM0033", *cr.Spec.Model)
-	assert.Equal(t, "Z1Z2Z3Z4", *cr.Spec.Serial)
-	assert.Equal(t, "5000C50012345678", *cr.Spec.WWN)
-	assert.Equal(t, int64(4000787030016), cr.Spec.Size)
-	assert.Equal(t, "HDD", cr.Spec.Type)
+	assert.Equal(t, "Seagate", drive.Vendor)
+	assert.Equal(t, "ST4000NM0033", drive.Model)
+	assert.Equal(t, "Z1Z2Z3Z4", drive.Serial)
+	assert.Equal(t, "5000C50012345678", drive.WWN)
+	assert.Equal(t, uint64(4000787030016), drive.Size)
+	assert.Equal(t, "HDD", drive.Type.String())
 }
 
 func TestBuildCR_NilSlot(t *testing.T) {
