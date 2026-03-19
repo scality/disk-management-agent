@@ -12,7 +12,7 @@ spec:
     listKind: DiscoveredPhysicalDiskList
     plural: discoveredphysicaldisks
     singular: discoveredphysicaldisk
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.id

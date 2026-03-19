@@ -20,9 +20,12 @@ import (
 	"context"
 	"time"
 
+	"github.com/go-logr/logr"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/event"
+
+	"disk-management-agent/pkg/usecase"
 )
 
 var _ = Describe("DiscoveryTicker", func() {
@@ -32,10 +35,10 @@ var _ = Describe("DiscoveryTicker", func() {
 
 			eventChan := make(chan event.GenericEvent, 1)
 			ticker := &DiscoveryTicker{
-				Client:    k8sClient,
 				NodeName:  "test-node",
 				Interval:  100 * time.Millisecond,
 				EventChan: eventChan,
+				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node"),
 			}
 
 			done := make(chan error, 1)
@@ -56,10 +59,10 @@ var _ = Describe("DiscoveryTicker", func() {
 
 			eventChan := make(chan event.GenericEvent, 10)
 			ticker := &DiscoveryTicker{
-				Client:    k8sClient,
 				NodeName:  "test-node",
 				Interval:  50 * time.Millisecond,
 				EventChan: eventChan,
+				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node"),
 			}
 
 			tickCount := 0
@@ -96,10 +99,10 @@ var _ = Describe("DiscoveryTicker", func() {
 
 			eventChan := make(chan event.GenericEvent, 1)
 			ticker := &DiscoveryTicker{
-				Client:    k8sClient,
 				NodeName:  "test-node",
 				Interval:  time.Hour, // Long interval; should not matter.
 				EventChan: eventChan,
+				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node"),
 			}
 
 			done := make(chan error, 1)

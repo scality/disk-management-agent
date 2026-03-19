@@ -20,24 +20,23 @@ import (
 	"context"
 	"time"
 
-	"sigs.k8s.io/controller-runtime/pkg/client"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
+
+	"disk-management-agent/pkg/usecase"
 )
 
 // DefaultDiscoveryInterval is the default interval at which the discovery
-// ticker fires. It will later be used to trigger raidmgmt calls to discover
-// drives.
+// ticker fires.
 const DefaultDiscoveryInterval = 5 * time.Minute
 
-// DiscoveryTicker periodically triggers disk discovery.
+// DiscoveryTicker periodically triggers disk discovery via the
+// DiscoverPhysicalDrives use case and sends GenericEvents for existing
+// CRs so the reconciler can update them.
 // It implements manager.Runnable (Start(context.Context) error) so it can
 // be registered with the controller-runtime manager via mgr.Add().
 type DiscoveryTicker struct {
-	// Client is a Kubernetes client used to interact with the API server.
-	// It will be used in the future to create/update DiscoveredPhysicalDisk
-	// resources after querying raidmgmt.
-	Client client.Client
 	// NodeName is the name of the Kubernetes node this agent is running on.
 	NodeName string
 	// Interval is the duration between consecutive discovery ticks.
@@ -45,6 +44,8 @@ type DiscoveryTicker struct {
 	// EventChan is a send-only channel used to push GenericEvents that
 	// trigger reconciliation of the DiscoveredPhysicalDisk controller.
 	EventChan chan<- event.GenericEvent
+	// UseCase performs the actual drive discovery and CR creation.
+	UseCase *usecase.DiscoverPhysicalDrives
 }
 
 // Start runs the ticker loop until the context is cancelled.
@@ -63,7 +64,31 @@ func (t *DiscoveryTicker) Start(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			logger.Info("Discovery tick")
-			// TODO: call raidmgmt to discover drives and send events on EventChan
+			t.discover(ctx)
 		}
 	}
+}
+
+func (t *DiscoveryTicker) discover(ctx context.Context) {
+	logger := logf.FromContext(ctx).WithName("discovery-ticker")
+
+	existingNames, err := t.UseCase.Execute(ctx)
+	if err != nil {
+		logger.Error(err, "Discovery use case failed")
+		return
+	}
+
+	for _, name := range existingNames {
+		t.EventChan <- event.GenericEvent{
+			Object: &metav1.PartialObjectMetadata{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: name,
+				},
+			},
+		}
+	}
+
+	logger.Info("Discovery tick completed",
+		"existingCRs", len(existingNames),
+	)
 }

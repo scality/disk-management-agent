@@ -47,6 +47,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/pkg/infrastructure/di"
 
 	webhookv1alpha1 "disk-management-agent/internal/webhook/v1alpha1"
 )
@@ -214,6 +215,15 @@ func main() {
 		os.Exit(1)
 	}
 
+	podNamespace := os.Getenv("POD_NAMESPACE")
+
+	container := di.NewContainer(
+		ctrl.Log.WithName("di"),
+		mgr.GetClient(),
+		nodeName,
+	)
+	discoverUseCase := container.GetDiscoverPhysicalDrivesUseCase()
+
 	tickerEvents := make(chan event.GenericEvent)
 
 	if err := (&controller.DiscoveredPhysicalDiskReconciler{
@@ -226,10 +236,10 @@ func main() {
 	}
 
 	discoveryTicker := &controller.DiscoveryTicker{
-		Client:    mgr.GetClient(),
 		NodeName:  nodeName,
 		Interval:  controller.DefaultDiscoveryInterval,
 		EventChan: tickerEvents,
+		UseCase:   discoverUseCase,
 	}
 	if err := mgr.Add(discoveryTicker); err != nil {
 		setupLog.Error(err, "unable to add discovery ticker to manager")
@@ -240,7 +250,6 @@ func main() {
 	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
 		// Build the allowed service account identity from the pod's own namespace
 		// and service account name (injected via the Kubernetes downward API).
-		podNamespace := os.Getenv("POD_NAMESPACE")
 		podServiceAccount := os.Getenv("POD_SERVICE_ACCOUNT")
 		if podNamespace == "" || podServiceAccount == "" {
 			setupLog.Error(nil, "POD_NAMESPACE and/or POD_SERVICE_ACCOUNT environment variables are required")

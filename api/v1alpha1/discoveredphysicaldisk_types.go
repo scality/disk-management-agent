@@ -89,6 +89,7 @@ type DiscoveredPhysicalDiskStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 // +kubebuilder:selectablefield:JSONPath=`.spec.nodeName`
 // +kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.spec.id`
 // +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.spec.nodeName`
