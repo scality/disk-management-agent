@@ -221,7 +221,6 @@ func main() {
 		ctrl.Log.WithName("di"),
 		mgr.GetClient(),
 		nodeName,
-		podNamespace,
 	)
 	discoverUseCase := container.GetDiscoverPhysicalDrivesUseCase()
 	reconcileUseCase := container.GetReconcileDiscoveredPhysicalDiskUseCase()

@@ -33,7 +33,6 @@ type Container struct {
 	logger    logr.Logger
 	k8sClient client.Client
 	nodeName  string
-	namespace string
 
 	megaraidPerccliCommandRunner *megaraid.MegaRAIDRunner
 	megaraidStorcliCommandRunner *megaraid.MegaRAIDRunner
@@ -59,12 +58,10 @@ func NewContainer(
 	logger logr.Logger,
 	k8sClient client.Client,
 	nodeName string,
-	namespace string,
 ) *Container {
 	return &Container{
 		logger:    logger,
 		k8sClient: k8sClient,
 		nodeName:  nodeName,
-		namespace: namespace,
 	}
 }
