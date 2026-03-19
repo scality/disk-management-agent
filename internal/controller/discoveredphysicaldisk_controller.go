@@ -23,6 +23,7 @@ import (
 
 	"github.com/scality/raidmgmt/pkg/domain/entities/physicaldrive"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -84,7 +85,7 @@ func (r *DiscoveredPhysicalDiskReconciler) Reconcile(ctx context.Context, req ct
 
 // mapDriveToStatus writes the reconcile result onto the CR status.
 func mapDriveToStatus(status *metalk8sv1alpha1.DiscoveredPhysicalDiskStatus, result usecase.PhysicalDriveReconcileResult) {
-	status.Available = ptr(result.Available)
+	status.Available = ptr.To(result.Available)
 
 	if !result.Available {
 		return
@@ -96,10 +97,10 @@ func mapDriveToStatus(status *metalk8sv1alpha1.DiscoveredPhysicalDiskStatus, res
 	status.Model = &drive.Model
 	status.Serial = &drive.Serial
 	status.WWN = &drive.WWN
-	status.Size = ptr(int64(drive.Size)) //nolint:gosec // raidmgmt uses uint64; overflow is not a concern for disk sizes
-	status.Type = ptr(drive.Type.String())
+	status.Size = ptr.To(int64(drive.Size)) //nolint:gosec // raidmgmt uses uint64; overflow is not a concern for disk sizes
+	status.Type = ptr.To(drive.Type.String())
 	status.JBOD = &drive.JBOD
-	status.Status = ptr(mapPDStatus(drive.Status))
+	status.Status = ptr.To(mapPDStatus(drive.Status))
 	status.Reason = &drive.Reason
 	status.DevicePath = &drive.DevicePath
 	status.PermanentPath = &drive.PermanentPath
@@ -116,10 +117,6 @@ func mapPDStatus(status physicaldrive.PDStatus) string {
 	default:
 		return ""
 	}
-}
-
-func ptr[T any](v T) *T {
-	return &v
 }
 
 // SetupWithManager sets up the controller with the Manager.

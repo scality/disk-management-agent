@@ -41,8 +41,7 @@ func newTestValidator() *DiscoveredPhysicalDiskCustomValidator {
 func newTestDisk() *metalk8sv1alpha1.DiscoveredPhysicalDisk {
 	return &metalk8sv1alpha1.DiscoveredPhysicalDisk{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      "test-disk",
-			Namespace: "default",
+			Name: "test-disk",
 		},
 		Spec: metalk8sv1alpha1.DiscoveredPhysicalDiskSpec{
 			NodeName: "node-1",
