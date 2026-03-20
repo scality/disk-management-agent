@@ -34,11 +34,12 @@ import (
 // It also populates the drive cache so that the reconciler can read the
 // latest discovered state.
 type DiscoverPhysicalDrives struct {
-	logger      logr.Logger
-	discoverers []service.PhysicalDriveDiscoverer
-	store       service.DiscoveredPhysicalDiskStore
-	cacheWriter service.DiscoveredDriveCacheWriter
-	nodeName    string
+	logger        logr.Logger
+	pdDiscoverers []service.PhysicalDriveDiscoverer
+	lvDiscoverers []service.LogicalVolumeDiscoverer
+	store         service.DiscoveredPhysicalDiskStore
+	cacheWriter   service.DiscoveredDriveCacheWriter
+	nodeName      string
 }
 
 // NewDiscoverPhysicalDrives creates a new DiscoverPhysicalDrives use case.
@@ -51,11 +52,12 @@ func NewDiscoverPhysicalDrives(
 	nodeName string,
 ) *DiscoverPhysicalDrives {
 	return &DiscoverPhysicalDrives{
-		logger:      logger.WithName("discover-physical-drives"),
-		discoverers: discoverers,
-		store:       store,
-		cacheWriter: cacheWriter,
-		nodeName:    nodeName,
+		logger:        logger.WithName("discover-physical-drives"),
+		pdDiscoverers: pdDiscoverers,
+		lvDiscoverers: lvDiscoverers,
+		store:         store,
+		cacheWriter:   cacheWriter,
+		nodeName:      nodeName,
 	}
 }
 
