@@ -132,7 +132,7 @@ func newTestSSD(ctrlType string, ctrlID int, slotID string) *domain.DiscoveredPh
 func TestExecute_NoDiscoverers(t *testing.T) {
 	store := &mockStore{}
 	cacheWriter := &mockCacheWriter{}
-	uc := NewDiscoverPhysicalDrives(logr.Discard(), nil, store, cacheWriter, "node-1")
+	uc := NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, store, cacheWriter, "node-1")
 
 	existing, err := uc.Execute(context.Background())
 
@@ -156,6 +156,7 @@ func TestExecute_SSDDrivesOnly(t *testing.T) {
 	uc := NewDiscoverPhysicalDrives(
 		logr.Discard(),
 		[]service.PhysicalDriveDiscoverer{discoverer},
+		[]service.LogicalVolumeDiscoverer{},
 		store,
 		cache,
 		"node-1",
@@ -183,6 +184,7 @@ func TestExecute_MixOfHDDAndSSD(t *testing.T) {
 	uc := NewDiscoverPhysicalDrives(
 		logr.Discard(),
 		[]service.PhysicalDriveDiscoverer{discoverer},
+		[]service.LogicalVolumeDiscoverer{},
 		store,
 		cache,
 		"node-1",
@@ -211,6 +213,7 @@ func TestExecute_ExistingCR(t *testing.T) {
 	uc := NewDiscoverPhysicalDrives(
 		logr.Discard(),
 		[]service.PhysicalDriveDiscoverer{discoverer},
+		nil,
 		store,
 		cache,
 		"node-1",
@@ -230,6 +233,7 @@ func TestExecute_DiscovererError(t *testing.T) {
 	uc := NewDiscoverPhysicalDrives(
 		logr.Discard(),
 		[]service.PhysicalDriveDiscoverer{failingDiscoverer},
+		nil,
 		store,
 		cache,
 		"node-1",
@@ -251,6 +255,7 @@ func TestExecute_StoreGetError(t *testing.T) {
 	uc := NewDiscoverPhysicalDrives(
 		logr.Discard(),
 		[]service.PhysicalDriveDiscoverer{discoverer},
+		nil,
 		store,
 		cache,
 		"node-1",
@@ -272,6 +277,7 @@ func TestExecute_StoreCreateError(t *testing.T) {
 	uc := NewDiscoverPhysicalDrives(
 		logr.Discard(),
 		[]service.PhysicalDriveDiscoverer{discoverer},
+		nil,
 		store,
 		cache,
 		"node-1",
@@ -296,6 +302,7 @@ func TestExecute_MultipleDiscoverers(t *testing.T) {
 	uc := NewDiscoverPhysicalDrives(
 		logr.Discard(),
 		[]service.PhysicalDriveDiscoverer{megaraidDiscoverer, smartArrayDiscoverer},
+		nil,
 		store,
 		cache,
 		"node-1",

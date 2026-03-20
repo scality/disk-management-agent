@@ -25,6 +25,7 @@ import (
 
 	"disk-management-agent/pkg/infrastructure/discovereddrivecache"
 	"disk-management-agent/pkg/infrastructure/discoveredphysicaldiskstore"
+	"disk-management-agent/pkg/infrastructure/logicalvolumediscoverer"
 	"disk-management-agent/pkg/infrastructure/physicaldrivediscoverer"
 	"disk-management-agent/pkg/usecase"
 )
@@ -46,6 +47,10 @@ type Container struct {
 	megaraidPerccliDiscoverer *physicaldrivediscoverer.MegaRAID
 	megaraidStorcliDiscoverer *physicaldrivediscoverer.MegaRAID
 	smartArrayDiscoverer      *physicaldrivediscoverer.SmartArray
+
+	megaraidPerccliLVDiscoverer *logicalvolumediscoverer.MegaRAID
+	megaraidStorcliLVDiscoverer *logicalvolumediscoverer.MegaRAID
+	smartArrayLVDiscoverer      *logicalvolumediscoverer.SmartArray
 
 	discoveredPhysicalDiskStore *discoveredphysicaldiskstore.Kubernetes
 	discoveredDriveCache        *discovereddrivecache.InMemory
