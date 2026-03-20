@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint:dupl // This function is similar to the one in the MegaRAID implementation.
 package logicalvolumediscoverer
 
 import (
@@ -49,13 +50,13 @@ func (d *SmartArray) DiscoverLogicalVolumes() ([]*domain.DiscoveredLogicalVolume
 	for _, ctrl := range controllers {
 		lvs, err := d.rc.LogicalVolumes(ctrl.Metadata)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to list logical volumes for SmartArray controller %d", ctrl.Metadata.ID)
+			return nil, errors.Wrapf(err, "failed to list logical volumes for SmartArray controller %d", ctrl.ID)
 		}
 
 		for _, lv := range lvs {
 			volumes = append(volumes, &domain.DiscoveredLogicalVolume{
 				ControllerType: smartArrayControllerType,
-				ControllerID:   ctrl.Metadata.ID,
+				ControllerID:   ctrl.ID,
 				LogicalVolume:  lv,
 			})
 		}
