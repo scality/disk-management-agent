@@ -137,7 +137,7 @@ var _ = Describe("DiscoveredPhysicalDisk Controller", func() {
 			Expect(*updated.Status.Model).To(Equal("ST4000NM0033"))
 			Expect(*updated.Status.Serial).To(Equal("Z1Z2Z3Z4"))
 			Expect(*updated.Status.WWN).To(Equal("5000C50012345678"))
-			Expect(*updated.Status.Size).To(Equal(int64(4000787030016)))
+			Expect(*updated.Status.Size).To(Equal(uint64(4000787030016)))
 			Expect(*updated.Status.Type).To(Equal("HDD"))
 			Expect(*updated.Status.JBOD).To(BeTrue())
 			Expect(*updated.Status.Status).To(Equal("Used"))

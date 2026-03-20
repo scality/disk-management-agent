@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/scality/raidmgmt/pkg/domain/entities/physicaldrive"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -97,24 +96,11 @@ func mapDriveToStatus(status *metalk8sv1alpha1.DiscoveredPhysicalDiskStatus, res
 	status.Model = &drive.Model
 	status.Serial = &drive.Serial
 	status.WWN = &drive.WWN
-	status.Size = ptr.To(int64(drive.Size)) //nolint:gosec // raidmgmt uses uint64; overflow is not a concern for disk sizes
+	status.Size = &drive.Size
 	status.Type = ptr.To(drive.Type.String())
 	status.JBOD = &drive.JBOD
-	status.Status = ptr.To(mapPDStatus(drive.Status))
+	status.Status = ptr.To(drive.Status.String())
 	status.Reason = &drive.Reason
-}
-
-func mapPDStatus(status physicaldrive.PDStatus) string {
-	switch status {
-	case physicaldrive.PDStatusUsed:
-		return "Used"
-	case physicaldrive.PDStatusUnassignedGood:
-		return "Available"
-	case physicaldrive.PDStatusFailed, physicaldrive.PDStatusUnassignedBad:
-		return "Failed"
-	default:
-		return ""
-	}
 }
 
 // SetupWithManager sets up the controller with the Manager.

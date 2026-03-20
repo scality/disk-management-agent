@@ -145,7 +145,7 @@ func (in *DiscoveredPhysicalDiskStatus) DeepCopyInto(out *DiscoveredPhysicalDisk
 	}
 	if in.Size != nil {
 		in, out := &in.Size, &out.Size
-		*out = new(int64)
+		*out = new(uint64)
 		**out = **in
 	}
 	if in.Type != nil {

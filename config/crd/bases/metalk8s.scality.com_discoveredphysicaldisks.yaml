@@ -139,10 +139,6 @@ spec:
                 type: integer
               status:
                 description: Status is the current disk status.
-                enum:
-                - Used
-                - Available
-                - Failed
                 type: string
               type:
                 description: Type is the disk media type.

@@ -28,26 +28,6 @@ import (
 	"disk-management-agent/pkg/usecase"
 )
 
-func TestMapPDStatus(t *testing.T) {
-	tests := []struct {
-		name     string
-		status   physicaldrive.PDStatus
-		expected string
-	}{
-		{"Used", physicaldrive.PDStatusUsed, "Used"},
-		{"Available", physicaldrive.PDStatusUnassignedGood, "Available"},
-		{"Failed", physicaldrive.PDStatusFailed, "Failed"},
-		{"UnassignedBad", physicaldrive.PDStatusUnassignedBad, "Failed"},
-		{"Unknown", physicaldrive.PDStatusUnknown, ""},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, mapPDStatus(tt.status))
-		})
-	}
-}
-
 func TestMapDriveToStatus_Available(t *testing.T) {
 	result := usecase.PhysicalDriveReconcileResult{
 		CacheReady: true,
@@ -81,7 +61,7 @@ func TestMapDriveToStatus_Available(t *testing.T) {
 	assert.Equal(t, "ST4000NM0033", *status.Model)
 	assert.Equal(t, "Z1Z2Z3Z4", *status.Serial)
 	assert.Equal(t, "5000C50012345678", *status.WWN)
-	assert.Equal(t, int64(4000787030016), *status.Size)
+	assert.Equal(t, uint64(4000787030016), *status.Size)
 	assert.Equal(t, "HDD", *status.Type)
 	assert.True(t, *status.JBOD)
 	assert.Equal(t, "Used", *status.Status)
