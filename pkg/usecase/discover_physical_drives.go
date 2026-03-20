@@ -169,6 +169,10 @@ func (u *DiscoverPhysicalDrives) gatherLogicalVolumes() []*domain.DiscoveredLogi
 	var allLVs []*domain.DiscoveredLogicalVolume
 
 	for _, discoverer := range u.lvDiscoverers {
+		if discoverer == nil {
+			continue
+		}
+
 		lvs, err := discoverer.DiscoverLogicalVolumes()
 		if err != nil {
 			u.logger.V(1).Info("LV discoverer returned an error, skipping", "error", err)
