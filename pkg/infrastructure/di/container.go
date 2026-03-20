@@ -23,6 +23,7 @@ import (
 	"github.com/scality/raidmgmt/pkg/implementation/raidcontroller/megaraid"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
+	"disk-management-agent/pkg/infrastructure/discovereddrivecache"
 	"disk-management-agent/pkg/infrastructure/discoveredphysicaldiskstore"
 	"disk-management-agent/pkg/infrastructure/physicaldrivediscoverer"
 	"disk-management-agent/pkg/usecase"
@@ -47,8 +48,10 @@ type Container struct {
 	smartArrayDiscoverer      *physicaldrivediscoverer.SmartArray
 
 	discoveredPhysicalDiskStore *discoveredphysicaldiskstore.Kubernetes
+	discoveredDriveCache        *discovereddrivecache.InMemory
 
-	discoverPhysicalDrivesUseCase *usecase.DiscoverPhysicalDrives
+	discoverPhysicalDrivesUseCase     *usecase.DiscoverPhysicalDrives
+	reconcileDiscoveredPhysicalDiskUC *usecase.ReconcileDiscoveredPhysicalDisk
 }
 
 func NewContainer(

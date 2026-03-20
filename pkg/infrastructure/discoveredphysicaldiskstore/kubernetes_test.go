@@ -50,8 +50,6 @@ func newTestDisk(name string) *metalk8sv1alpha1.DiscoveredPhysicalDisk {
 			},
 			ID:   "0:1:0",
 			Slot: metalk8sv1alpha1.SlotLocation{Port: "0", Enclosure: "1", Bay: "0"},
-			Size: 4000787030016,
-			Type: "HDD",
 		},
 	}
 }

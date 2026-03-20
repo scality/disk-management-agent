@@ -39,6 +39,7 @@ type SlotLocation struct {
 }
 
 // DiscoveredPhysicalDiskSpec defines the desired state of DiscoveredPhysicalDisk.
+// It contains only immutable slot identifiers set at creation time.
 type DiscoveredPhysicalDiskSpec struct {
 	// NodeName is the name of the node where this disk was discovered.
 	NodeName string `json:"nodeName"`
@@ -48,6 +49,13 @@ type DiscoveredPhysicalDiskSpec struct {
 	ID string `json:"id"`
 	// Slot describes the physical slot location of the disk.
 	Slot SlotLocation `json:"slot"`
+}
+
+// DiscoveredPhysicalDiskStatus defines the observed state of DiscoveredPhysicalDisk.
+type DiscoveredPhysicalDiskStatus struct {
+	// Available indicates whether the physical drive is present in the slot.
+	// +optional
+	Available *bool `json:"available,omitempty"`
 	// Vendor is the disk manufacturer.
 	// +optional
 	Vendor *string `json:"vendor,omitempty"`
@@ -61,19 +69,16 @@ type DiscoveredPhysicalDiskSpec struct {
 	// +optional
 	WWN *string `json:"wwn,omitempty"`
 	// Size is the disk capacity in bytes.
-	Size int64 `json:"size"`
+	// +optional
+	Size *uint64 `json:"size,omitempty"`
 	// Type is the disk media type.
 	// +kubebuilder:validation:Enum=HDD;SSD;NVMe
-	Type string `json:"type"`
-}
-
-// DiscoveredPhysicalDiskStatus defines the observed state of DiscoveredPhysicalDisk.
-type DiscoveredPhysicalDiskStatus struct {
+	// +optional
+	Type *string `json:"type,omitempty"`
 	// JBOD indicates whether the disk is in JBOD (passthrough) mode.
 	// +optional
 	JBOD *bool `json:"jbod,omitempty"`
 	// Status is the current disk status.
-	// +kubebuilder:validation:Enum=Used;Available;Failed
 	// +optional
 	Status *string `json:"status,omitempty"`
 	// Reason provides additional context for the current status.
@@ -93,8 +98,9 @@ type DiscoveredPhysicalDiskStatus struct {
 // +kubebuilder:selectablefield:JSONPath=`.spec.nodeName`
 // +kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.spec.id`
 // +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.spec.nodeName`
-// +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.spec.type`
-// +kubebuilder:printcolumn:name="Size",type=integer,JSONPath=`.spec.size`
+// +kubebuilder:printcolumn:name="Available",type=boolean,JSONPath=`.status.available`
+// +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.status.type`
+// +kubebuilder:printcolumn:name="Size",type=integer,JSONPath=`.status.size`
 // +kubebuilder:printcolumn:name="Status",type=string,JSONPath=`.status.status`
 
 // DiscoveredPhysicalDisk is the Schema for the discoveredphysicaldisks API.

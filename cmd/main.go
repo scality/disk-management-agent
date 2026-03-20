@@ -223,13 +223,15 @@ func main() {
 		nodeName,
 	)
 	discoverUseCase := container.GetDiscoverPhysicalDrivesUseCase()
+	reconcileUseCase := container.GetReconcileDiscoveredPhysicalDiskUseCase()
 
 	tickerEvents := make(chan event.GenericEvent)
 
 	if err := (&controller.DiscoveredPhysicalDiskReconciler{
-		Client:   mgr.GetClient(),
-		Scheme:   mgr.GetScheme(),
-		NodeName: nodeName,
+		Client:           mgr.GetClient(),
+		Scheme:           mgr.GetScheme(),
+		NodeName:         nodeName,
+		ReconcileUseCase: reconcileUseCase,
 	}).SetupWithManager(mgr, tickerEvents); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "DiscoveredPhysicalDisk")
 		os.Exit(1)
@@ -246,26 +248,26 @@ func main() {
 		os.Exit(1)
 	}
 
-	// nolint:goconst
-	if os.Getenv("ENABLE_WEBHOOKS") != "false" {
-		// Build the allowed service account identity from the pod's own namespace
-		// and service account name (injected via the Kubernetes downward API).
-		podServiceAccount := os.Getenv("POD_SERVICE_ACCOUNT")
-		if podNamespace == "" || podServiceAccount == "" {
-			setupLog.Error(nil, "POD_NAMESPACE and/or POD_SERVICE_ACCOUNT environment variables are required")
-			os.Exit(1)
-		}
-		allowedSA := fmt.Sprintf("system:serviceaccount:%s:%s", podNamespace, podServiceAccount)
-		setupLog.Info("Configuring validating webhook", "allowedServiceAccount", allowedSA)
+	// Build the allowed service account identity from the pod's own namespace
+	// and service account name (injected via the Kubernetes downward API).
+	// As a side note:
+	// 	In the future, we'll implement proper role based access control in metalk8s.
+	// 	A solution like kyverno could be used to enforce RBAC policies.
+	podServiceAccount := os.Getenv("POD_SERVICE_ACCOUNT")
+	if podNamespace == "" || podServiceAccount == "" {
+		setupLog.Info("WARNING: POD_NAMESPACE and/or POD_SERVICE_ACCOUNT environment variables are not set; " +
+			"webhook will reject all create/update requests")
+	}
+	allowedSA := fmt.Sprintf("system:serviceaccount:%s:%s", podNamespace, podServiceAccount)
+	setupLog.Info("Configuring validating webhook", "allowedServiceAccount", allowedSA)
 
-		if err := webhookv1alpha1.SetupDiscoveredPhysicalDiskWebhookWithManager(mgr,
-			&webhookv1alpha1.DiscoveredPhysicalDiskCustomValidator{
-				AllowedServiceAccount: allowedSA,
-			},
-		); err != nil {
-			setupLog.Error(err, "unable to create webhook", "webhook", "DiscoveredPhysicalDisk")
-			os.Exit(1)
-		}
+	if err := webhookv1alpha1.SetupDiscoveredPhysicalDiskWebhookWithManager(mgr,
+		&webhookv1alpha1.DiscoveredPhysicalDiskCustomValidator{
+			AllowedServiceAccount: allowedSA,
+		},
+	); err != nil {
+		setupLog.Error(err, "unable to create webhook", "webhook", "DiscoveredPhysicalDisk")
+		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
 

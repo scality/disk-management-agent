@@ -18,8 +18,11 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
@@ -28,7 +31,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/pkg/usecase"
 )
+
+const cacheNotReadyRequeueDelay = 30 * time.Second
 
 // DiscoveredPhysicalDiskReconciler reconciles a DiscoveredPhysicalDisk object
 type DiscoveredPhysicalDiskReconciler struct {
@@ -39,28 +45,62 @@ type DiscoveredPhysicalDiskReconciler struct {
 	// DiscoveredPhysicalDisk resources whose spec.nodeName matches this value
 	// are watched and cached.
 	NodeName string
+	// ReconcileUseCase provides the discovered drive state for a given CR.
+	ReconcileUseCase *usecase.ReconcileDiscoveredPhysicalDisk
 }
 
 // +kubebuilder:rbac:groups=metalk8s.scality.com,resources=discoveredphysicaldisks,verbs=get;list;watch;create;update;patch;delete
 // +kubebuilder:rbac:groups=metalk8s.scality.com,resources=discoveredphysicaldisks/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups=metalk8s.scality.com,resources=discoveredphysicaldisks/finalizers,verbs=update
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the DiscoveredPhysicalDisk object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.21.0/pkg/reconcile
+// Reconcile fetches the latest discovered drive data from the cache and
+// updates the CR status accordingly.
 func (r *DiscoveredPhysicalDiskReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := logf.FromContext(ctx)
 	logger.Info("Reconciling DiscoveredPhysicalDisk")
 
-	// TODO(user): your logic here
+	cr := &metalk8sv1alpha1.DiscoveredPhysicalDisk{}
+	if err := r.Get(ctx, req.NamespacedName, cr); err != nil {
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	result := r.ReconcileUseCase.Execute(req.Name)
+
+	if !result.CacheReady {
+		logger.Info("Drive cache not ready yet, requeuing")
+		return ctrl.Result{RequeueAfter: cacheNotReadyRequeueDelay}, nil
+	}
+
+	mapDriveToStatus(&cr.Status, result)
+
+	if err := r.Status().Update(ctx, cr); err != nil {
+		return ctrl.Result{}, fmt.Errorf("unable to update DiscoveredPhysicalDisk status: %w", err)
+	}
+
+	logger.Info("DiscoveredPhysicalDisk status updated")
 
 	return ctrl.Result{}, nil
+}
+
+// mapDriveToStatus writes the reconcile result onto the CR status.
+func mapDriveToStatus(status *metalk8sv1alpha1.DiscoveredPhysicalDiskStatus, result usecase.PhysicalDriveReconcileResult) {
+	status.Available = ptr.To(result.Available)
+
+	if !result.Available {
+		return
+	}
+
+	drive := result.Drive
+
+	status.Vendor = &drive.Vendor
+	status.Model = &drive.Model
+	status.Serial = &drive.Serial
+	status.WWN = &drive.WWN
+	status.Size = &drive.Size
+	status.Type = ptr.To(drive.Type.String())
+	status.JBOD = &drive.JBOD
+	status.Status = ptr.To(drive.Status.String())
+	status.Reason = &drive.Reason
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -25,8 +25,16 @@ import (
 	. "github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 
+	"disk-management-agent/pkg/domain"
+	"disk-management-agent/pkg/service"
 	"disk-management-agent/pkg/usecase"
 )
+
+type noopCacheWriter struct{}
+
+var _ service.DiscoveredDriveCacheWriter = &noopCacheWriter{}
+
+func (n *noopCacheWriter) Replace(_ map[string]*domain.DiscoveredPhysicalDrive) {}
 
 var _ = Describe("DiscoveryTicker", func() {
 	Context("When started", func() {
@@ -38,7 +46,7 @@ var _ = Describe("DiscoveryTicker", func() {
 				NodeName:  "test-node",
 				Interval:  100 * time.Millisecond,
 				EventChan: eventChan,
-				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node"),
+				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, &noopCacheWriter{}, "test-node"),
 			}
 
 			done := make(chan error, 1)
@@ -62,7 +70,7 @@ var _ = Describe("DiscoveryTicker", func() {
 				NodeName:  "test-node",
 				Interval:  50 * time.Millisecond,
 				EventChan: eventChan,
-				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node"),
+				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, &noopCacheWriter{}, "test-node"),
 			}
 
 			tickCount := 0
@@ -102,7 +110,7 @@ var _ = Describe("DiscoveryTicker", func() {
 				NodeName:  "test-node",
 				Interval:  time.Hour, // Long interval; should not matter.
 				EventChan: eventChan,
-				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, "test-node"),
+				UseCase:   usecase.NewDiscoverPhysicalDrives(logr.Discard(), nil, nil, &noopCacheWriter{}, "test-node"),
 			}
 
 			done := make(chan error, 1)
