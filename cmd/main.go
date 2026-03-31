@@ -223,13 +223,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	podNamespace := os.Getenv("POD_NAMESPACE")
-
 	container := di.NewContainer(
 		ctrl.Log.WithName("di"),
 		mgr.GetClient(),
 		nodeName,
-		podNamespace,
 		getEnvOrDefault("STORCLI_PATH", "/host/libexec/MegaRAID/storcli/storcli64"),
 		getEnvOrDefault("PERCCLI_PATH", "/host/libexec/MegaRAID/perccli/perccli64"),
 		getEnvOrDefault("SSACLI_PATH", "/host/libexec/ssacli"),
@@ -265,6 +262,7 @@ func main() {
 	// As a side note:
 	// 	In the future, we'll implement proper role based access control in metalk8s.
 	// 	A solution like kyverno could be used to enforce RBAC policies.
+	podNamespace := os.Getenv("POD_NAMESPACE")
 	podServiceAccount := os.Getenv("POD_SERVICE_ACCOUNT")
 	if podNamespace == "" || podServiceAccount == "" {
 		setupLog.Info("WARNING: POD_NAMESPACE and/or POD_SERVICE_ACCOUNT environment variables are not set; " +
