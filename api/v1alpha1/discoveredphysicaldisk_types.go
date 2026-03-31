@@ -70,7 +70,7 @@ type DiscoveredPhysicalDiskStatus struct {
 	WWN *string `json:"wwn,omitempty"`
 	// Size is the disk capacity in bytes.
 	// +optional
-	Size *int64 `json:"size,omitempty"`
+	Size *uint64 `json:"size,omitempty"`
 	// Type is the disk media type.
 	// +kubebuilder:validation:Enum=HDD;SSD;NVMe
 	// +optional
@@ -79,7 +79,6 @@ type DiscoveredPhysicalDiskStatus struct {
 	// +optional
 	JBOD *bool `json:"jbod,omitempty"`
 	// Status is the current disk status.
-	// +kubebuilder:validation:Enum=Used;Available;Failed
 	// +optional
 	Status *string `json:"status,omitempty"`
 	// Reason provides additional context for the current status.
@@ -95,7 +94,9 @@ type DiscoveredPhysicalDiskStatus struct {
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
+// +kubebuilder:resource:scope=Cluster
 // +kubebuilder:selectablefield:JSONPath=`.spec.nodeName`
+// +kubebuilder:printcolumn:name="ID",type=string,JSONPath=`.spec.id`
 // +kubebuilder:printcolumn:name="Node",type=string,JSONPath=`.spec.nodeName`
 // +kubebuilder:printcolumn:name="Available",type=boolean,JSONPath=`.status.available`
 // +kubebuilder:printcolumn:name="Type",type=string,JSONPath=`.status.type`

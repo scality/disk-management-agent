@@ -12,9 +12,12 @@ spec:
     listKind: DiscoveredPhysicalDiskList
     plural: discoveredphysicaldisks
     singular: discoveredphysicaldisk
-  scope: Namespaced
+  scope: Cluster
   versions:
   - additionalPrinterColumns:
+    - jsonPath: .spec.id
+      name: ID
+      type: string
     - jsonPath: .spec.nodeName
       name: Node
       type: string
@@ -136,10 +139,6 @@ spec:
                 type: integer
               status:
                 description: Status is the current disk status.
-                enum:
-                - Used
-                - Available
-                - Failed
                 type: string
               type:
                 description: Type is the disk media type.

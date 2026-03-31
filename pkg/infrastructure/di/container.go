@@ -34,7 +34,6 @@ type Container struct {
 	logger    logr.Logger
 	k8sClient client.Client
 	nodeName  string
-	namespace string
 
 	storcliPath string
 	perccliPath string

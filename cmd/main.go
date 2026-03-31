@@ -262,6 +262,9 @@ func main() {
 
 	// Build the allowed service account identity from the pod's own namespace
 	// and service account name (injected via the Kubernetes downward API).
+	// As a side note:
+	// 	In the future, we'll implement proper role based access control in metalk8s.
+	// 	A solution like kyverno could be used to enforce RBAC policies.
 	podServiceAccount := os.Getenv("POD_SERVICE_ACCOUNT")
 	if podNamespace == "" || podServiceAccount == "" {
 		setupLog.Info("WARNING: POD_NAMESPACE and/or POD_SERVICE_ACCOUNT environment variables are not set; " +

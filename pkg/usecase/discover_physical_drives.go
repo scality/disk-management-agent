@@ -40,7 +40,6 @@ type DiscoverPhysicalDrives struct {
 	store         service.DiscoveredPhysicalDiskStore
 	cacheWriter   service.DiscoveredDriveCacheWriter
 	nodeName      string
-	namespace     string
 }
 
 // NewDiscoverPhysicalDrives creates a new DiscoverPhysicalDrives use case.
@@ -51,7 +50,6 @@ func NewDiscoverPhysicalDrives(
 	store service.DiscoveredPhysicalDiskStore,
 	cacheWriter service.DiscoveredDriveCacheWriter,
 	nodeName string,
-	namespace string,
 ) *DiscoverPhysicalDrives {
 	return &DiscoverPhysicalDrives{
 		logger:        logger.WithName("discover-physical-drives"),
@@ -60,7 +58,6 @@ func NewDiscoverPhysicalDrives(
 		store:         store,
 		cacheWriter:   cacheWriter,
 		nodeName:      nodeName,
-		namespace:     namespace,
 	}
 }
 
@@ -82,7 +79,7 @@ func (u *DiscoverPhysicalDrives) Execute(ctx context.Context) ([]string, error) 
 	var existingCRNames []string
 
 	for crName, drive := range drivesByName {
-		existing, err := u.store.Get(ctx, u.namespace, crName)
+		existing, err := u.store.Get(ctx, crName)
 		if err != nil {
 			u.logger.Error(err, "Failed to check DiscoveredPhysicalDisk existence", "name", crName)
 
@@ -96,7 +93,7 @@ func (u *DiscoverPhysicalDrives) Execute(ctx context.Context) ([]string, error) 
 			continue
 		}
 
-		cr := buildCR(crName, u.namespace, u.nodeName, drive)
+		cr := buildCR(crName, u.nodeName, drive)
 
 		if err := u.store.Create(ctx, cr); err != nil {
 			u.logger.Error(err, "Failed to create DiscoveredPhysicalDisk", "name", crName)
@@ -172,6 +169,10 @@ func (u *DiscoverPhysicalDrives) gatherLogicalVolumes() []*domain.DiscoveredLogi
 	var allLVs []*domain.DiscoveredLogicalVolume
 
 	for _, discoverer := range u.lvDiscoverers {
+		if discoverer == nil {
+			continue
+		}
+
 		lvs, err := discoverer.DiscoverLogicalVolumes()
 		if err != nil {
 			u.logger.V(1).Info("LV discoverer returned an error, skipping", "error", err)
@@ -242,7 +243,7 @@ func findMatchingLogicalVolume(
 }
 
 func buildCR(
-	name, namespace, nodeName string,
+	name, nodeName string,
 	drive *domain.DiscoveredPhysicalDrive,
 ) *metalk8sv1alpha1.DiscoveredPhysicalDisk {
 	slot := metalk8sv1alpha1.SlotLocation{}
@@ -254,8 +255,7 @@ func buildCR(
 
 	return &metalk8sv1alpha1.DiscoveredPhysicalDisk{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: namespace,
+			Name: name,
 		},
 		Spec: metalk8sv1alpha1.DiscoveredPhysicalDiskSpec{
 			NodeName: nodeName,

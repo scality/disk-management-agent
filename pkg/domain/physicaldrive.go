@@ -36,9 +36,9 @@ type DiscoveredPhysicalDrive struct {
 //
 //	<node-name>-<controller-type>-<controller-id>-<slot-str>
 //
-// where slot-str is the drive's slot identifier with colons removed and
-// lowercased to produce a valid DNS subdomain label.
+// where slot-str is the drive's slot identifier with colons replaced by
+// dashes and lowercased to produce a valid DNS subdomain label.
 func ComputeCRName(nodeName, controllerType string, controllerID int, slotID string) string {
-	sanitized := strings.ToLower(strings.ReplaceAll(slotID, ":", ""))
+	sanitized := strings.ToLower(strings.ReplaceAll(slotID, ":", "-"))
 	return fmt.Sprintf("%s-%s-%d-%s", nodeName, strings.ToLower(controllerType), controllerID, sanitized)
 }
