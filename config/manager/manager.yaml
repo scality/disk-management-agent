@@ -50,10 +50,7 @@ spec:
       #             values:
       #               - linux
       securityContext:
-        # Projects are configured by default to adhere to the "restricted" Pod Security Standards.
-        # This ensures that deployments meet the highest security requirements for Kubernetes.
-        # For more details, see: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
-        runAsNonRoot: true
+        runAsNonRoot: false
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -76,12 +73,16 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: spec.nodeName
+          - name: STORCLI_PATH
+            value: "/host/libexec/MegaRAID/storcli/storcli64"
+          - name: PERCCLI_PATH
+            value: "/host/libexec/MegaRAID/perccli/perccli64"
+          - name: SSACLI_PATH
+            value: "/host/libexec/ssacli"
         ports: []
         securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - "ALL"
+          privileged: true
+          runAsUser: 0
         livenessProbe:
           httpGet:
             path: /healthz
@@ -103,7 +104,27 @@ spec:
           requests:
             cpu: 10m
             memory: 64Mi
-        volumeMounts: []
-      volumes: []
+        volumeMounts:
+        - name: megaraid
+          mountPath: /host/libexec/MegaRAID
+          readOnly: true
+        - name: ssacli
+          mountPath: /host/libexec/ssacli
+          readOnly: true
+        - name: dev
+          mountPath: /dev
+      volumes:
+      - name: megaraid
+        hostPath:
+          path: /opt/MegaRAID/
+          type: DirectoryOrCreate
+      - name: ssacli
+        hostPath:
+          path: /usr/bin/ssacli
+          type: FileOrCreate
+      - name: dev
+        hostPath:
+          path: /dev
+          type: Directory
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
