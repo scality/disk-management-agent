@@ -33,10 +33,10 @@ jobs:
           user: ${{ secrets.ARTIFACTS_USER }}
           password: ${{ secrets.ARTIFACTS_PASSWORD }}
 
-      - name: Retrieve bundle.yaml from artifacts
+      - name: Retrieve install.yaml from artifacts
         run: >
           curl --fail -LO -u ${{ secrets.ARTIFACTS_USER }}:${{ secrets.ARTIFACTS_PASSWORD }}
-          ${{ steps.artifacts.outputs.link }}/bundle.yaml
+          ${{ steps.artifacts.outputs.link }}/install.yaml
 
       - name: Retrieve crds.yaml from artifacts
         run: >
@@ -51,7 +51,7 @@ jobs:
           prerelease: ${{ contains(github.ref_name, '-') }}
           draft: false
           files: |
-            bundle.yaml
+            install.yaml
             crds.yaml
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
