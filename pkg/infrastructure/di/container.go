@@ -34,7 +34,6 @@ type Container struct {
 	logger    logr.Logger
 	k8sClient client.Client
 	nodeName  string
-	namespace string
 
 	storcliPath string
 	perccliPath string
@@ -68,7 +67,6 @@ func NewContainer(
 	logger logr.Logger,
 	k8sClient client.Client,
 	nodeName string,
-	namespace string,
 	storcliPath string,
 	perccliPath string,
 	ssacliPath string,
@@ -77,7 +75,6 @@ func NewContainer(
 		logger:      logger,
 		k8sClient:   k8sClient,
 		nodeName:    nodeName,
-		namespace:   namespace,
 		storcliPath: storcliPath,
 		perccliPath: perccliPath,
 		ssacliPath:  ssacliPath,

@@ -17,12 +17,14 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
 
+	"disk-management-agent/cmd/config"
 	"disk-management-agent/internal/controller"
 
 	// +kubebuilder:scaffold:imports
@@ -56,14 +58,6 @@ var (
 	scheme   = runtime.NewScheme()
 	setupLog = ctrl.Log.WithName("setup")
 )
-
-func getEnvOrDefault(key, defaultValue string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
-	}
-
-	return defaultValue
-}
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
@@ -102,6 +96,17 @@ func main() {
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
+
+	cfg, err := config.NewEnvironment(context.Background())
+	if err != nil {
+		setupLog.Error(err, "failed to load configuration from environment")
+		os.Exit(1)
+	}
+	setupLog.Info("Configuration loaded",
+		"nodeName", cfg.NodeName,
+		"applicationName", config.ApplicationName,
+		"applicationVersion", config.ApplicationVersion,
+	)
 
 	// if the enable-http2 flag is false (the default), http/2 should be disabled
 	// due to its vulnerabilities. More specifically, disabling http/2 will
@@ -192,17 +197,6 @@ func main() {
 		})
 	}
 
-	// Retrieve the node name injected via the Kubernetes Downward API.
-	// This is required so that the cache only watches DiscoveredPhysicalDisk
-	// resources that belong to the local node.
-	nodeName := os.Getenv("NODE_NAME")
-	if nodeName == "" {
-		setupLog.Error(fmt.Errorf("NODE_NAME environment variable is not set"),
-			"NODE_NAME must be set via the Kubernetes Downward API (spec.nodeName)")
-		os.Exit(1)
-	}
-	setupLog.Info("Configuring cache field selector for local node", "nodeName", nodeName)
-
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:                 scheme,
 		Metrics:                metricsServerOptions,
@@ -212,7 +206,7 @@ func main() {
 			ByObject: map[client.Object]cache.ByObject{
 				&metalk8sv1alpha1.DiscoveredPhysicalDisk{}: {
 					Field: fields.SelectorFromSet(fields.Set{
-						"spec.nodeName": nodeName,
+						"spec.nodeName": cfg.NodeName,
 					}),
 				},
 			},
@@ -223,16 +217,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	podNamespace := os.Getenv("POD_NAMESPACE")
-
 	container := di.NewContainer(
 		ctrl.Log.WithName("di"),
 		mgr.GetClient(),
-		nodeName,
-		podNamespace,
-		getEnvOrDefault("STORCLI_PATH", "/host/libexec/MegaRAID/storcli/storcli64"),
-		getEnvOrDefault("PERCCLI_PATH", "/host/libexec/MegaRAID/perccli/perccli64"),
-		getEnvOrDefault("SSACLI_PATH", "/host/libexec/ssacli"),
+		cfg.NodeName,
+		cfg.StorcliPath,
+		cfg.PerccliPath,
+		cfg.SsacliPath,
 	)
 	discoverUseCase := container.GetDiscoverPhysicalDrivesUseCase()
 	reconcileUseCase := container.GetReconcileDiscoveredPhysicalDiskUseCase()
@@ -242,7 +233,7 @@ func main() {
 	if err := (&controller.DiscoveredPhysicalDiskReconciler{
 		Client:           mgr.GetClient(),
 		Scheme:           mgr.GetScheme(),
-		NodeName:         nodeName,
+		NodeName:         cfg.NodeName,
 		ReconcileUseCase: reconcileUseCase,
 	}).SetupWithManager(mgr, tickerEvents); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "DiscoveredPhysicalDisk")
@@ -250,7 +241,7 @@ func main() {
 	}
 
 	discoveryTicker := &controller.DiscoveryTicker{
-		NodeName:  nodeName,
+		NodeName:  cfg.NodeName,
 		Interval:  controller.DefaultDiscoveryInterval,
 		EventChan: tickerEvents,
 		UseCase:   discoverUseCase,
@@ -262,12 +253,14 @@ func main() {
 
 	// Build the allowed service account identity from the pod's own namespace
 	// and service account name (injected via the Kubernetes downward API).
-	podServiceAccount := os.Getenv("POD_SERVICE_ACCOUNT")
-	if podNamespace == "" || podServiceAccount == "" {
+	// As a side note:
+	// 	In the future, we'll implement proper role based access control in metalk8s.
+	// 	A solution like kyverno could be used to enforce RBAC policies.
+	if cfg.PodNamespace == "" || cfg.PodServiceAccount == "" {
 		setupLog.Info("WARNING: POD_NAMESPACE and/or POD_SERVICE_ACCOUNT environment variables are not set; " +
 			"webhook will reject all create/update requests")
 	}
-	allowedSA := fmt.Sprintf("system:serviceaccount:%s:%s", podNamespace, podServiceAccount)
+	allowedSA := fmt.Sprintf("system:serviceaccount:%s:%s", cfg.PodNamespace, cfg.PodServiceAccount)
 	setupLog.Info("Configuring validating webhook", "allowedServiceAccount", allowedSA)
 
 	if err := webhookv1alpha1.SetupDiscoveredPhysicalDiskWebhookWithManager(mgr,

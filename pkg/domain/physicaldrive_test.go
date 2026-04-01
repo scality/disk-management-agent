@@ -37,7 +37,7 @@ func TestComputeCRName(t *testing.T) {
 			controllerType: "MegaRAID",
 			controllerID:   0,
 			slotID:         "0:1:2",
-			expected:       "node-1-megaraid-0-012",
+			expected:       "node-1-megaraid-0-0-1-2",
 		},
 		{
 			name:           "SmartArray with mixed-case slot",
@@ -45,7 +45,7 @@ func TestComputeCRName(t *testing.T) {
 			controllerType: "SmartArray",
 			controllerID:   1,
 			slotID:         "1I:1:4",
-			expected:       "worker-3-smartarray-1-1i14",
+			expected:       "worker-3-smartarray-1-1i-1-4",
 		},
 		{
 			name:           "bay-only slot",
@@ -61,7 +61,15 @@ func TestComputeCRName(t *testing.T) {
 			controllerType: "MegaRAID",
 			controllerID:   0,
 			slotID:         "252:0",
-			expected:       "node-2-megaraid-0-2520",
+			expected:       "node-2-megaraid-0-252-0",
+		},
+		{
+			name:           "no collision between different slot hierarchies",
+			nodeName:       "node-1",
+			controllerType: "MegaRAID",
+			controllerID:   0,
+			slotID:         "25:2:0",
+			expected:       "node-1-megaraid-0-25-2-0",
 		},
 	}
 

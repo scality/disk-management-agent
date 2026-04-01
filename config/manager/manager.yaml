@@ -50,10 +50,7 @@ spec:
       #             values:
       #               - linux
       securityContext:
-        # Projects are configured by default to adhere to the "restricted" Pod Security Standards.
-        # This ensures that deployments meet the highest security requirements for Kubernetes.
-        # For more details, see: https://kubernetes.io/docs/concepts/security/pod-security-standards/#restricted
-        runAsNonRoot: true
+        runAsNonRoot: false
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -84,10 +81,8 @@ spec:
             value: "/host/libexec/ssacli"
         ports: []
         securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-            - "ALL"
+          privileged: true
+          runAsUser: 0
         livenessProbe:
           httpGet:
             path: /healthz
@@ -116,6 +111,8 @@ spec:
         - name: ssacli
           mountPath: /host/libexec/ssacli
           readOnly: true
+        - name: dev
+          mountPath: /dev
       volumes:
       - name: megaraid
         hostPath:
@@ -125,5 +122,9 @@ spec:
         hostPath:
           path: /usr/bin/ssacli
           type: FileOrCreate
+      - name: dev
+        hostPath:
+          path: /dev
+          type: Directory
       serviceAccountName: controller-manager
       terminationGracePeriodSeconds: 10
