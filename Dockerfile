@@ -2,6 +2,7 @@
 FROM golang:1.25 AS builder
 ARG TARGETOS
 ARG TARGETARCH
+ARG APPLICATION_VERSION=dev
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -12,7 +13,8 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY cmd/main.go cmd/main.go
+# Copy full cmd tree so imports like cmd/config are available during build.
+COPY cmd/ cmd/
 COPY api/ api/
 COPY internal/ internal/
 COPY pkg/ pkg/
