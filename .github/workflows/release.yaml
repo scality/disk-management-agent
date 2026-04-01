@@ -79,5 +79,5 @@ jobs:
           git config --global user.email ${{ github.actor }}@scality.com
           git config --global user.name ${{ github.actor }}
 
-          git tag -a "$RELEASE_TAG" -m "Platform Disk Management Agent $RELEASE_TAG"
+          git tag -a "$RELEASE_TAG" -m "Disk Management Agent $RELEASE_TAG"
           git push origin "$RELEASE_TAG"

@@ -64,8 +64,8 @@ jobs:
           build-args:
             APPLICATION_VERSION=${{ steps.tags.outputs.version }}
           tags: ${{ steps.tags.outputs.tags }}
-          cache-from: type=gha,scope=platform-disk-management-agent
-          cache-to: type=gha,mode=max,scope=platform-disk-management-agent
+          cache-from: type=gha,scope=disk-management-agent
+          cache-to: type=gha,mode=max,scope=disk-management-agent
           secrets: |
             GIT_AUTH_TOKEN=${{ secrets.GIT_ACCESS_TOKEN }}
 

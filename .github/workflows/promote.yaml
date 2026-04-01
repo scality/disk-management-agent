@@ -45,7 +45,7 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
-          name: Platform Disk Management Agent ${{ github.ref_name }}
+          name: Disk Management Agent ${{ github.ref_name }}
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true
           prerelease: ${{ contains(github.ref_name, '-') }}
