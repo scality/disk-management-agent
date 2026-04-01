@@ -59,6 +59,14 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+
+	return defaultValue
+}
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -221,6 +229,9 @@ func main() {
 		ctrl.Log.WithName("di"),
 		mgr.GetClient(),
 		cfg.NodeName,
+		cfg.StorcliPath,
+		cfg.PerccliPath,
+		cfg.SsacliPath,
 	)
 	discoverUseCase := container.GetDiscoverPhysicalDrivesUseCase()
 	reconcileUseCase := container.GetReconcileDiscoveredPhysicalDiskUseCase()

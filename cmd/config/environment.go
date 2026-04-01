@@ -35,6 +35,9 @@ type Environment struct {
 	NodeName          string `env:"NODE_NAME, required"`
 	PodNamespace      string `env:"POD_NAMESPACE"`
 	PodServiceAccount string `env:"POD_SERVICE_ACCOUNT"`
+	StorcliPath       string `env:"STORCLI_PATH, default=/host/libexec/MegaRAID/storcli/storcli64"`
+	PerccliPath       string `env:"PERCCLI_PATH, default=/host/libexec/MegaRAID/perccli/perccli64"`
+	SsacliPath        string `env:"SSACLI_PATH, default=/host/libexec/ssacli"`
 }
 
 func NewEnvironment(ctx context.Context) (*Environment, error) {

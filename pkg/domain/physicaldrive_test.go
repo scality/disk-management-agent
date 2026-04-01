@@ -63,6 +63,14 @@ func TestComputeCRName(t *testing.T) {
 			slotID:         "252:0",
 			expected:       "node-2-megaraid-0-252-0",
 		},
+		{
+			name:           "no collision between different slot hierarchies",
+			nodeName:       "node-1",
+			controllerType: "MegaRAID",
+			controllerID:   0,
+			slotID:         "25:2:0",
+			expected:       "node-1-megaraid-0-25-2-0",
+		},
 	}
 
 	for _, tt := range tests {
