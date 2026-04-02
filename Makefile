@@ -197,6 +197,11 @@ build-installer: manifests generate kustomize ## Generate a consolidated YAML wi
 	cd config/manager && $(KUSTOMIZE) edit set image controller=${IMG}
 	$(KUSTOMIZE) build config/default > dist/install.yaml
 
+.PHONY: build-crds
+build-crds: manifests kustomize ## Generate a YAML with CRDs.
+	mkdir -p dist
+	$(KUSTOMIZE) build config/crd > dist/crds.yaml
+
 ##@ Deployment
 
 ifndef ignore-not-found
