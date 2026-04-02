@@ -6,24 +6,81 @@
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 
 A Kubernetes node agent that discovers physical HDD drives behind hardware RAID
-controllers and represents them as cluster-scoped `DiscoveredPhysicalDisk`
-custom resources.
+controllers and exposes them as cluster-scoped `DiscoveredPhysicalDisk` custom
+resources. Storage orchestration platforms (such as
+[MetalK8s](https://github.com/scality/metalk8s)) and operators can consume
+these CRs to build a reliable, Kubernetes-native inventory of every physical
+disk in the cluster.
 
 Built with [Operator SDK](https://sdk.operatorframework.io/) and
-[raidmgmt](https://github.com/scality/raidmgmt), the agent supports
-**MegaRAID** (via `storcli64` / `perccli64`) and **HPE Smart Array** (via
-`ssacli`) controllers.
+[raidmgmt](https://github.com/scality/raidmgmt).
 
-## Why
+## Features
 
-Storage orchestration platforms such as
-[MetalK8s](https://github.com/scality/metalk8s) need a reliable, Kubernetes-native
-inventory of the physical disks available on each node. This agent runs as a
-DaemonSet, periodically queries the hardware RAID CLIs installed on the host,
-and publishes the results as `DiscoveredPhysicalDisk` CRs that higher-level
-controllers can consume.
+- **MegaRAID support** -- discovers drives via `storcli64` and `perccli64`
+  (Broadcom / Dell PERC controllers)
+- **HPE Smart Array support** -- discovers drives via `ssacli`
+- **Periodic discovery** -- scans every 5 minutes; new drives get CRs
+  automatically, existing CRs have their status refreshed
+- **Validating webhook** -- restricts CR creation and updates to the agent's own
+  service account
+- **Cluster-scoped CRD** -- immutable spec (node, controller, slot) with a
+  status sub-resource reflecting live hardware state
+- **Clean architecture** -- business logic is decoupled from Kubernetes and RAID
+  infrastructure through ports and adapters
 
-## Architecture
+## Prerequisites
+
+| Requirement | Details |
+|---|---|
+| Kubernetes | v1.33+ |
+| cert-manager | Required for webhook TLS (installed by the default Kustomize overlay) |
+| RAID CLI tools | At least one of `storcli64`, `perccli64`, or `ssacli` installed on target nodes |
+| Container runtime | Docker or compatible (for building images) |
+
+## Quick Start
+
+### Install CRDs
+
+```bash
+make install
+```
+
+### Build and push the container image
+
+```bash
+make docker-build docker-push IMG=<registry>/disk-management-agent:<tag>
+```
+
+### Deploy the agent
+
+```bash
+make deploy IMG=<registry>/disk-management-agent:<tag>
+```
+
+This deploys a DaemonSet into the `disk-management-agent-system` namespace.
+After a few minutes you should see `DiscoveredPhysicalDisk` resources appear:
+
+```bash
+kubectl get discoveredphysicaldisks
+```
+
+### Generate a single install manifest
+
+If you prefer applying a single YAML file instead of using `make deploy`:
+
+```bash
+make build-installer IMG=<registry>/disk-management-agent:<tag>
+kubectl apply -f dist/install.yaml
+```
+
+### Uninstall
+
+```bash
+make undeploy
+```
+
+## How It Works
 
 ```mermaid
 flowchart TD
@@ -57,17 +114,24 @@ flowchart TD
     Reconciler -->|"Status Update"| CRD
 ```
 
+The agent runs as a DaemonSet -- one pod per node. Each instance only manages
+disks for its own node.
+
 1. A **DiscoveryTicker** fires every 5 minutes and runs the
    **DiscoverPhysicalDrives** use case.
 2. The use case invokes every registered `PhysicalDriveDiscoverer` and
-   `LogicalVolumeDiscoverer` (MegaRAID + Smart Array adapters), filters to HDD
-   only, enriches device paths from logical volume metadata, replaces the
+   `LogicalVolumeDiscoverer` adapter (MegaRAID + Smart Array), keeps only HDD
+   drives, enriches device paths from logical volume metadata, replaces the
    in-memory cache, and creates any missing `DiscoveredPhysicalDisk` CRs.
 3. For CRs that already exist the ticker sends a `GenericEvent` to the
    **Reconciler**, which reads the latest snapshot from the cache and updates
    the CR `.status` (vendor, model, serial, size, paths, etc.).
-4. A **validating webhook** restricts CR creation/update to the agent's own
+4. A **validating webhook** restricts CR creation and updates to the agent's own
    service account.
+
+If a RAID CLI tool is not installed on a node (e.g. `storcli64` on a
+SmartArray-only host), the corresponding discoverer logs the error and is
+skipped -- it does not block other discoverers.
 
 ## CRD Reference
 
@@ -138,121 +202,43 @@ status:
 
 ## Configuration
 
-The agent is configured through environment variables:
+The agent is configured through environment variables. When deployed via the
+default Kustomize manifests, `NODE_NAME`, `POD_NAMESPACE`, and
+`POD_SERVICE_ACCOUNT` are injected automatically.
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `NODE_NAME` | Yes | -- | Kubernetes node name (typically injected via the downward API) |
-| `POD_NAMESPACE` | No | -- | Pod namespace, used to build the webhook allowed service account |
-| `POD_SERVICE_ACCOUNT` | No | -- | Pod service account name, used for webhook authorization |
-| `STORCLI_PATH` | No | `/host/libexec/MegaRAID/storcli/storcli64` | Path to the storcli binary |
-| `PERCCLI_PATH` | No | `/host/libexec/MegaRAID/perccli/perccli64` | Path to the perccli binary |
-| `SSACLI_PATH` | No | `/host/libexec/ssacli` | Path to the ssacli binary |
+| `NODE_NAME` | Yes | -- | Kubernetes node name (injected via the downward API) |
+| `POD_NAMESPACE` | No | -- | Pod namespace; used to build the webhook allowed service account |
+| `POD_SERVICE_ACCOUNT` | No | -- | Pod service account name; used for webhook authorization |
+| `STORCLI_PATH` | No | `/host/libexec/MegaRAID/storcli/storcli64` | Path to the `storcli64` binary |
+| `PERCCLI_PATH` | No | `/host/libexec/MegaRAID/perccli/perccli64` | Path to the `perccli64` binary |
+| `SSACLI_PATH` | No | `/host/libexec/ssacli` | Path to the `ssacli` binary |
 
-The application version is injected at build time via ldflags (defaults to
-`dev`).
-
-## Getting Started
-
-### Prerequisites
-
-- Go 1.25+
-- A Kubernetes cluster (v1.33+)
-- `make`
-- Docker or compatible container runtime
-- At least one supported RAID CLI tool installed on the target nodes
-
-### Build
-
-```bash
-make build
-```
-
-### Install CRDs
-
-```bash
-make install
-```
-
-### Run locally (out-of-cluster, uses current kubeconfig)
-
-```bash
-NODE_NAME=my-node make run
-```
-
-### Build and push the container image
-
-```bash
-make docker-build docker-push IMG=<registry>/disk-management-agent:<tag>
-```
-
-### Deploy to a cluster
-
-```bash
-make deploy IMG=<registry>/disk-management-agent:<tag>
-```
-
-### Uninstall
-
-```bash
-make undeploy
-```
-
-## Project Structure
-
-```
-disk-management-agent/
-├── api/v1alpha1/           # CRD type definitions (DiscoveredPhysicalDisk)
-├── cmd/
-│   ├── config/             # Environment configuration loading
-│   └── main.go             # Application entry point
-├── config/                 # Kustomize manifests (CRDs, RBAC, manager, webhook)
-├── internal/
-│   ├── controller/         # Kubernetes reconciler and discovery ticker
-│   └── webhook/v1alpha1/   # Validating admission webhook
-├── pkg/
-│   ├── domain/             # Core business entities (DiscoveredPhysicalDrive, DiscoveredLogicalVolume)
-│   ├── service/            # Interface definitions (ports)
-│   ├── usecase/            # Application business logic
-│   └── infrastructure/     # Adapters: RAID discoverers, Kubernetes store, cache, DI container
-├── test/e2e/               # End-to-end tests (Kind)
-├── Dockerfile
-├── Makefile
-└── go.mod
-```
-
-The project follows **clean architecture** principles under `pkg/`: use cases
-depend only on domain entities and service interfaces (ports), while
-infrastructure adapters implement those interfaces. The Operator SDK scaffold
-(`cmd/`, `api/`, `internal/`, `config/`) provides the Kubernetes integration
-layer.
+The application version is injected at build time via `-ldflags` and defaults to
+`dev`.
 
 ## Development
 
 ```bash
-# Generate CRD manifests and RBAC
-make manifests
-
-# Generate DeepCopy methods
-make generate
-
-# Format and vet
-make fmt vet
-
-# Run unit tests (with envtest for controller tests)
-make test
-
-# Run linter (golangci-lint)
-make lint
-
-# Run end-to-end tests (requires Kind)
-make test-e2e
+make build                # Build the manager binary
+NODE_NAME=my-node make run  # Run locally against your current kubeconfig
+make manifests            # Regenerate CRD, RBAC, and webhook manifests
+make generate             # Regenerate DeepCopy methods
+make fmt vet              # Format and vet
+make lint                 # Run golangci-lint
+make test                 # Unit + controller tests (envtest)
+make test-e2e             # End-to-end tests (Kind)
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full development guide, coding
+standards, architecture overview, and pull request process.
 
 ## Contributing
 
-Contributions are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for
-development workflow, coding standards, and pull request guidelines.
+Contributions are welcome -- whether it is a bug fix, a new RAID controller
+adapter, documentation improvements, or anything else. See
+[CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 ## License
 
