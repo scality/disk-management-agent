@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/scality/go-errors"
 	"github.com/scality/raidmgmt/pkg/domain/entities/logicalvolume"
 	"github.com/scality/raidmgmt/pkg/domain/entities/physicaldrive"
 	"github.com/scality/raidmgmt/pkg/domain/entities/raidcontroller"
@@ -27,6 +28,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"disk-management-agent/pkg/domain"
 	"disk-management-agent/pkg/service"
 )
 
@@ -237,8 +239,12 @@ func TestDiscoverPhysicalDrives_ControllersError(t *testing.T) {
 
 			require.Error(t, err)
 			assert.Nil(t, result)
+			assert.True(t, errors.Is(err, domain.ErrControllerDiscovery))
+
+			var goErr *errors.Error
+			require.True(t, errors.As(err, &goErr))
+			assert.Equal(t, f.controllerType, goErr.Properties["controller_type"])
 			assert.Contains(t, err.Error(), "hardware fault")
-			assert.Contains(t, err.Error(), f.name)
 			rc.AssertExpectations(t)
 		})
 	}
@@ -257,8 +263,13 @@ func TestDiscoverPhysicalDrives_PhysicalDrivesError(t *testing.T) {
 
 			require.Error(t, err)
 			assert.Nil(t, result)
+			assert.True(t, errors.Is(err, domain.ErrDriveDiscovery))
+
+			var goErr *errors.Error
+			require.True(t, errors.As(err, &goErr))
+			assert.Equal(t, f.controllerType, goErr.Properties["controller_type"])
+			assert.Equal(t, 0, goErr.Properties["controller_id"])
 			assert.Contains(t, err.Error(), "I/O timeout")
-			assert.Contains(t, err.Error(), "controller 0")
 			rc.AssertExpectations(t)
 		})
 	}
