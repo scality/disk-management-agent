@@ -18,9 +18,9 @@ package controller
 
 import (
 	"context"
-	"fmt"
 	"time"
 
+	"github.com/scality/go-errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -31,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/pkg/domain"
 	"disk-management-agent/pkg/usecase"
 )
 
@@ -74,7 +75,11 @@ func (r *DiscoveredPhysicalDiskReconciler) Reconcile(ctx context.Context, req ct
 	mapDriveToStatus(&cr.Status, result)
 
 	if err := r.Status().Update(ctx, cr); err != nil {
-		return ctrl.Result{}, fmt.Errorf("unable to update DiscoveredPhysicalDisk status: %w", err)
+		return ctrl.Result{}, errors.Wrap(domain.ErrReconciliation,
+			errors.WithDetail("unable to update DiscoveredPhysicalDisk status"),
+			errors.WithProperty("name", req.Name),
+			errors.CausedBy(err),
+		)
 	}
 
 	logger.Info("DiscoveredPhysicalDisk status updated")

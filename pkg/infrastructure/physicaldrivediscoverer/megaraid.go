@@ -18,7 +18,7 @@ limitations under the License.
 package physicaldrivediscoverer
 
 import (
-	"github.com/pkg/errors"
+	"github.com/scality/go-errors"
 	"github.com/scality/raidmgmt/pkg/domain/ports"
 
 	"disk-management-agent/pkg/domain"
@@ -42,7 +42,11 @@ func NewMegaRAID(rc ports.RAIDController) *MegaRAID {
 func (d *MegaRAID) DiscoverPhysicalDrives() ([]*domain.DiscoveredPhysicalDrive, error) {
 	controllers, err := d.rc.Controllers()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to list MegaRAID controllers")
+		return nil, errors.Wrap(domain.ErrControllerDiscovery,
+			errors.WithDetail("failed to list controllers"),
+			errors.WithProperty("controller_type", megaraidControllerType),
+			errors.CausedBy(err),
+		)
 	}
 
 	var drives []*domain.DiscoveredPhysicalDrive
@@ -50,7 +54,12 @@ func (d *MegaRAID) DiscoverPhysicalDrives() ([]*domain.DiscoveredPhysicalDrive, 
 	for _, ctrl := range controllers {
 		pds, err := d.rc.PhysicalDrives(ctrl.Metadata)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to list physical drives for MegaRAID controller %d", ctrl.ID)
+			return nil, errors.Wrap(domain.ErrDriveDiscovery,
+				errors.WithDetail("failed to list physical drives from controller"),
+				errors.WithProperty("controller_id", ctrl.ID),
+				errors.WithProperty("controller_type", megaraidControllerType),
+				errors.CausedBy(err),
+			)
 		}
 
 		for _, pd := range pds {

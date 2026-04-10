@@ -19,11 +19,13 @@ package discoveredphysicaldiskstore
 import (
 	"context"
 
+	"github.com/scality/go-errors"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/pkg/domain"
 	"disk-management-agent/pkg/service"
 )
 
@@ -53,7 +55,11 @@ func (s *Kubernetes) Get(
 			return nil, nil
 		}
 
-		return nil, err
+		return nil, errors.Wrap(domain.ErrDiskStoreOperation,
+			errors.WithDetail("failed to get DiscoveredPhysicalDisk"),
+			errors.WithProperty("name", name),
+			errors.CausedBy(err),
+		)
 	}
 
 	return disk, nil
@@ -61,5 +67,13 @@ func (s *Kubernetes) Get(
 
 // Create persists a new DiscoveredPhysicalDisk resource.
 func (s *Kubernetes) Create(ctx context.Context, disk *metalk8sv1alpha1.DiscoveredPhysicalDisk) error {
-	return s.client.Create(ctx, disk)
+	if err := s.client.Create(ctx, disk); err != nil {
+		return errors.Wrap(domain.ErrDiskStoreOperation,
+			errors.WithDetail("failed to create DiscoveredPhysicalDisk"),
+			errors.WithProperty("name", disk.Name),
+			errors.CausedBy(err),
+		)
+	}
+
+	return nil
 }

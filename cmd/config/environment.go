@@ -18,9 +18,11 @@ package config
 
 import (
 	"context"
-	"fmt"
 
+	"github.com/scality/go-errors"
 	"github.com/sethvargo/go-envconfig"
+
+	"disk-management-agent/pkg/domain"
 )
 
 // ApplicationVersion is the version of the application.
@@ -52,9 +54,11 @@ func NewEnvironment(ctx context.Context) (*Environment, error) {
 }
 
 func (cfg *Environment) Load(ctx context.Context) error {
-	err := envconfig.Process(ctx, cfg)
-	if err != nil {
-		return fmt.Errorf("failed to process environment variables: %w", err)
+	if err := envconfig.Process(ctx, cfg); err != nil {
+		return errors.Wrap(domain.ErrConfigLoad,
+			errors.WithDetail("failed to process environment variables"),
+			errors.CausedBy(err),
+		)
 	}
 
 	return nil

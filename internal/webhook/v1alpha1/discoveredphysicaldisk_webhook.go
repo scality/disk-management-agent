@@ -18,14 +18,15 @@ package v1alpha1
 
 import (
 	"context"
-	"fmt"
 
+	goerrors "github.com/scality/go-errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	metalk8sv1alpha1 "disk-management-agent/api/v1alpha1"
+	"disk-management-agent/pkg/domain"
 )
 
 // nolint:unused
@@ -52,7 +53,9 @@ var _ admission.CustomValidator = &DiscoveredPhysicalDiskCustomValidator{}
 func (v *DiscoveredPhysicalDiskCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	disk, ok := obj.(*metalk8sv1alpha1.DiscoveredPhysicalDisk)
 	if !ok {
-		return nil, fmt.Errorf("expected a DiscoveredPhysicalDisk object but got %T", obj)
+		return nil, goerrors.Wrap(domain.ErrValidation,
+			goerrors.WithDetailf("expected a DiscoveredPhysicalDisk object but got %T", obj),
+		)
 	}
 	discoveredphysicaldisklog.Info("Validation for DiscoveredPhysicalDisk upon creation", "name", disk.GetName())
 	return v.validateServiceAccount(ctx)
@@ -62,7 +65,9 @@ func (v *DiscoveredPhysicalDiskCustomValidator) ValidateCreate(ctx context.Conte
 func (v *DiscoveredPhysicalDiskCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
 	disk, ok := newObj.(*metalk8sv1alpha1.DiscoveredPhysicalDisk)
 	if !ok {
-		return nil, fmt.Errorf("expected a DiscoveredPhysicalDisk object but got %T", newObj)
+		return nil, goerrors.Wrap(domain.ErrValidation,
+			goerrors.WithDetailf("expected a DiscoveredPhysicalDisk object but got %T", newObj),
+		)
 	}
 	discoveredphysicaldisklog.Info("Validation for DiscoveredPhysicalDisk upon update", "name", disk.GetName())
 	return v.validateServiceAccount(ctx)
@@ -75,7 +80,9 @@ func (v *DiscoveredPhysicalDiskCustomValidator) ValidateUpdate(ctx context.Conte
 func (v *DiscoveredPhysicalDiskCustomValidator) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
 	disk, ok := obj.(*metalk8sv1alpha1.DiscoveredPhysicalDisk)
 	if !ok {
-		return nil, fmt.Errorf("expected a DiscoveredPhysicalDisk object but got %T", obj)
+		return nil, goerrors.Wrap(domain.ErrValidation,
+			goerrors.WithDetailf("expected a DiscoveredPhysicalDisk object but got %T", obj),
+		)
 	}
 	discoveredphysicaldisklog.Info("Validation for DiscoveredPhysicalDisk upon deletion", "name", disk.GetName())
 	return nil, nil
@@ -86,14 +93,16 @@ func (v *DiscoveredPhysicalDiskCustomValidator) ValidateDelete(_ context.Context
 func (v *DiscoveredPhysicalDiskCustomValidator) validateServiceAccount(ctx context.Context) (admission.Warnings, error) {
 	req, err := admission.RequestFromContext(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("expected admission request in context: %w", err)
+		return nil, goerrors.Wrap(domain.ErrValidation,
+			goerrors.WithDetail("expected admission request in context"),
+			goerrors.CausedBy(err),
+		)
 	}
 
 	if req.UserInfo.Username != v.AllowedServiceAccount {
-		return nil, fmt.Errorf(
-			"only the disk management agent service account (%s) can create or update DiscoveredPhysicalDisk resources, got: %s",
-			v.AllowedServiceAccount,
-			req.UserInfo.Username,
+		return nil, goerrors.Wrap(domain.ErrValidation,
+			goerrors.WithDetailf("only the disk management agent service account (%s) can create or update DiscoveredPhysicalDisk resources", v.AllowedServiceAccount),
+			goerrors.WithProperty("requesting_user", req.UserInfo.Username),
 		)
 	}
 
