@@ -17,18 +17,23 @@ limitations under the License.
 package di
 
 import (
-	"os"
-
 	"github.com/scality/raidmgmt/pkg/implementation/commandrunner"
 	"github.com/scality/raidmgmt/pkg/implementation/raidcontroller/megaraid"
 )
 
 func (c *Container) getMegaRAIDPerccliCommandRunner() *megaraid.MegaRAIDRunner {
+	if !c.megaraidPerccliAvailable {
+		return nil
+	}
+
 	if c.megaraidPerccliCommandRunner == nil {
 		runner, err := megaraid.NewMegaRAIDRunner(c.perccliPath)
 		if err != nil {
-			c.logger.Error(err, "Failed to create MegaRAID perccli runner")
-			os.Exit(1)
+			c.logger.Error(err, "Failed to create MegaRAID perccli runner, discovery disabled",
+				"path", c.perccliPath)
+			c.megaraidPerccliAvailable = false
+
+			return nil
 		}
 
 		c.megaraidPerccliCommandRunner = runner
@@ -38,11 +43,18 @@ func (c *Container) getMegaRAIDPerccliCommandRunner() *megaraid.MegaRAIDRunner {
 }
 
 func (c *Container) getMegaRAIDStorcliCommandRunner() *megaraid.MegaRAIDRunner {
+	if !c.megaraidStorcliAvailable {
+		return nil
+	}
+
 	if c.megaraidStorcliCommandRunner == nil {
 		runner, err := megaraid.NewMegaRAIDRunner(c.storcliPath)
 		if err != nil {
-			c.logger.Error(err, "Failed to create MegaRAID storcli runner")
-			os.Exit(1)
+			c.logger.Error(err, "Failed to create MegaRAID storcli runner, discovery disabled",
+				"path", c.storcliPath)
+			c.megaraidStorcliAvailable = false
+
+			return nil
 		}
 
 		c.megaraidStorcliCommandRunner = runner
@@ -52,6 +64,10 @@ func (c *Container) getMegaRAIDStorcliCommandRunner() *megaraid.MegaRAIDRunner {
 }
 
 func (c *Container) getSSACLICommandRunner() *commandrunner.SSACLI {
+	if !c.smartArrayAvailable {
+		return nil
+	}
+
 	if c.ssacliCommandRunner == nil {
 		c.ssacliCommandRunner = commandrunner.NewSSACLI(&c.ssacliPath)
 	}

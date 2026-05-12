@@ -40,18 +40,47 @@ func (c *Container) getDiscoveredDriveCache() *discovereddrivecache.InMemory {
 }
 
 // GetDiscoverPhysicalDrivesUseCase returns the singleton use case instance.
+//
+// Vendor discoverers whose CLI is missing on the host are skipped at
+// construction time. This is intentional: appending a typed nil pointer
+// to an interface slice would produce a non-nil interface value with a
+// nil dynamic type, which the use case's `discoverer == nil` guard would
+// not catch, so we filter here instead.
 func (c *Container) GetDiscoverPhysicalDrivesUseCase() *usecase.DiscoverPhysicalDrives {
 	if c.discoverPhysicalDrivesUseCase == nil {
-		pdDiscoverers := []service.PhysicalDriveDiscoverer{
-			c.getMegaRAIDPerccliDiscoverer(),
-			c.getMegaRAIDStorcliDiscoverer(),
-			c.getSmartArrayDiscoverer(),
+		var pdDiscoverers []service.PhysicalDriveDiscoverer
+
+		if d := c.getMegaRAIDPerccliDiscoverer(); d != nil {
+			pdDiscoverers = append(pdDiscoverers, d)
 		}
 
-		lvDiscoverers := []service.LogicalVolumeDiscoverer{
-			c.getMegaRAIDPerccliLVDiscoverer(),
-			c.getMegaRAIDStorcliLVDiscoverer(),
-			c.getSmartArrayLVDiscoverer(),
+		if d := c.getMegaRAIDStorcliDiscoverer(); d != nil {
+			pdDiscoverers = append(pdDiscoverers, d)
+		}
+
+		if d := c.getSmartArrayDiscoverer(); d != nil {
+			pdDiscoverers = append(pdDiscoverers, d)
+		}
+
+		var lvDiscoverers []service.LogicalVolumeDiscoverer
+
+		if d := c.getMegaRAIDPerccliLVDiscoverer(); d != nil {
+			lvDiscoverers = append(lvDiscoverers, d)
+		}
+
+		if d := c.getMegaRAIDStorcliLVDiscoverer(); d != nil {
+			lvDiscoverers = append(lvDiscoverers, d)
+		}
+
+		if d := c.getSmartArrayLVDiscoverer(); d != nil {
+			lvDiscoverers = append(lvDiscoverers, d)
+		}
+
+		if len(pdDiscoverers) == 0 {
+			c.logger.Info(
+				"No RAID vendor CLI is available on this node; " +
+					"physical drive discovery will produce no results until a vendor binary is installed",
+			)
 		}
 
 		c.discoverPhysicalDrivesUseCase = usecase.NewDiscoverPhysicalDrives(
