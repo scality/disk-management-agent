@@ -42,17 +42,8 @@ func (c *Container) getDiscoveredDriveCache() *discovereddrivecache.InMemory {
 // GetDiscoverPhysicalDrivesUseCase returns the singleton use case instance.
 func (c *Container) GetDiscoverPhysicalDrivesUseCase() *usecase.DiscoverPhysicalDrives {
 	if c.discoverPhysicalDrivesUseCase == nil {
-		pdDiscoverers := []service.PhysicalDriveDiscoverer{
-			c.getMegaRAIDPerccliDiscoverer(),
-			c.getMegaRAIDStorcliDiscoverer(),
-			c.getSmartArrayDiscoverer(),
-		}
-
-		lvDiscoverers := []service.LogicalVolumeDiscoverer{
-			c.getMegaRAIDPerccliLVDiscoverer(),
-			c.getMegaRAIDStorcliLVDiscoverer(),
-			c.getSmartArrayLVDiscoverer(),
-		}
+		pdDiscoverers := c.buildPhysicalDriveDiscoverers()
+		lvDiscoverers := c.buildLogicalVolumeDiscoverers()
 
 		c.discoverPhysicalDrivesUseCase = usecase.NewDiscoverPhysicalDrives(
 			c.logger,
@@ -65,6 +56,65 @@ func (c *Container) GetDiscoverPhysicalDrivesUseCase() *usecase.DiscoverPhysical
 	}
 
 	return c.discoverPhysicalDrivesUseCase
+}
+
+// buildPhysicalDriveDiscoverers assembles the physical-drive discoverer
+// slice for the use case, skipping any discoverer that could not be
+// constructed (e.g. because its CLI tool is unavailable on this host).
+//
+// Appending a typed nil pointer to an interface slice would yield a
+// non-nil interface value wrapping a nil concrete pointer, which would
+// defeat the nil check inside the use case. We therefore append only
+// concrete pointers that are non-nil.
+func (c *Container) buildPhysicalDriveDiscoverers() []service.PhysicalDriveDiscoverer {
+	var discoverers []service.PhysicalDriveDiscoverer
+
+	if d := c.getMegaRAIDPerccliDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID perccli physical-drive discoverer disabled")
+	}
+
+	if d := c.getMegaRAIDStorcliDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID storcli physical-drive discoverer disabled")
+	}
+
+	if d := c.getSmartArrayDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("SmartArray physical-drive discoverer disabled")
+	}
+
+	return discoverers
+}
+
+// buildLogicalVolumeDiscoverers mirrors buildPhysicalDriveDiscoverers
+// for the logical-volume discoverer slice. See that function for the
+// rationale behind the explicit nil-check.
+func (c *Container) buildLogicalVolumeDiscoverers() []service.LogicalVolumeDiscoverer {
+	var discoverers []service.LogicalVolumeDiscoverer
+
+	if d := c.getMegaRAIDPerccliLVDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID perccli logical-volume discoverer disabled")
+	}
+
+	if d := c.getMegaRAIDStorcliLVDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID storcli logical-volume discoverer disabled")
+	}
+
+	if d := c.getSmartArrayLVDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("SmartArray logical-volume discoverer disabled")
+	}
+
+	return discoverers
 }
 
 // GetReconcileDiscoveredPhysicalDiskUseCase returns the singleton reconcile use case.

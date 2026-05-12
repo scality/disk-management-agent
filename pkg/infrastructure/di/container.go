@@ -44,6 +44,10 @@ type Container struct {
 	ssacliCommandRunner          *commandrunner.SSACLI
 	lsblkCommandRunner           *commandrunner.LSBLK
 
+	megaraidPerccliCommandRunnerTried bool
+	megaraidStorcliCommandRunnerTried bool
+	ssacliCommandRunnerTried          bool
+
 	megaraidPerccliRAIDController *megaraid.Adapter
 	megaraidStorcliRAIDController *megaraid.Adapter
 	smartArrayRAIDController      *raidcontroller.SmartArray

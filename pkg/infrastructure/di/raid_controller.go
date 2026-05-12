@@ -28,7 +28,12 @@ import (
 
 func (c *Container) getMegaRAIDPerccliRAIDController() *megaraid.Adapter {
 	if c.megaraidPerccliRAIDController == nil {
-		c.megaraidPerccliRAIDController = megaraid.New(c.getMegaRAIDPerccliCommandRunner())
+		runner := c.getMegaRAIDPerccliCommandRunner()
+		if runner == nil {
+			return nil
+		}
+
+		c.megaraidPerccliRAIDController = megaraid.New(runner)
 	}
 
 	return c.megaraidPerccliRAIDController
@@ -36,7 +41,12 @@ func (c *Container) getMegaRAIDPerccliRAIDController() *megaraid.Adapter {
 
 func (c *Container) getMegaRAIDStorcliRAIDController() *megaraid.Adapter {
 	if c.megaraidStorcliRAIDController == nil {
-		c.megaraidStorcliRAIDController = megaraid.New(c.getMegaRAIDStorcliCommandRunner())
+		runner := c.getMegaRAIDStorcliCommandRunner()
+		if runner == nil {
+			return nil
+		}
+
+		c.megaraidStorcliRAIDController = megaraid.New(runner)
 	}
 
 	return c.megaraidStorcliRAIDController
@@ -45,6 +55,10 @@ func (c *Container) getMegaRAIDStorcliRAIDController() *megaraid.Adapter {
 func (c *Container) getSmartArrayRAIDController() *raidcontroller.SmartArray {
 	if c.smartArrayRAIDController == nil {
 		ssacliRunner := c.getSSACLICommandRunner()
+		if ssacliRunner == nil {
+			return nil
+		}
+
 		lsblkRunner := c.getLSBLKCommandRunner()
 
 		ctrlGetter := controllergetter.NewSSACLI(ssacliRunner)
