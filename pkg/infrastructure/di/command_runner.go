@@ -17,44 +17,88 @@ limitations under the License.
 package di
 
 import (
-	"os"
+	"os/exec"
 
 	"github.com/scality/raidmgmt/pkg/implementation/commandrunner"
 	"github.com/scality/raidmgmt/pkg/implementation/raidcontroller/megaraid"
 )
 
 func (c *Container) getMegaRAIDPerccliCommandRunner() *megaraid.MegaRAIDRunner {
-	if c.megaraidPerccliCommandRunner == nil {
-		runner, err := megaraid.NewMegaRAIDRunner(c.perccliPath)
-		if err != nil {
-			c.logger.Error(err, "Failed to create MegaRAID perccli runner")
-			os.Exit(1)
-		}
-
-		c.megaraidPerccliCommandRunner = runner
+	if c.megaraidPerccliCommandRunner != nil {
+		return c.megaraidPerccliCommandRunner
 	}
+
+	if c.megaraidPerccliCommandRunnerTried {
+		return nil
+	}
+
+	c.megaraidPerccliCommandRunnerTried = true
+
+	runner, err := megaraid.NewMegaRAIDRunner(c.perccliPath)
+	if err != nil {
+		c.logger.Info(
+			"MegaRAID perccli runner unavailable, related features will be disabled",
+			"path", c.perccliPath,
+			"error", err.Error(),
+		)
+
+		return nil
+	}
+
+	c.megaraidPerccliCommandRunner = runner
 
 	return c.megaraidPerccliCommandRunner
 }
 
 func (c *Container) getMegaRAIDStorcliCommandRunner() *megaraid.MegaRAIDRunner {
-	if c.megaraidStorcliCommandRunner == nil {
-		runner, err := megaraid.NewMegaRAIDRunner(c.storcliPath)
-		if err != nil {
-			c.logger.Error(err, "Failed to create MegaRAID storcli runner")
-			os.Exit(1)
-		}
-
-		c.megaraidStorcliCommandRunner = runner
+	if c.megaraidStorcliCommandRunner != nil {
+		return c.megaraidStorcliCommandRunner
 	}
+
+	if c.megaraidStorcliCommandRunnerTried {
+		return nil
+	}
+
+	c.megaraidStorcliCommandRunnerTried = true
+
+	runner, err := megaraid.NewMegaRAIDRunner(c.storcliPath)
+	if err != nil {
+		c.logger.Info(
+			"MegaRAID storcli runner unavailable, related features will be disabled",
+			"path", c.storcliPath,
+			"error", err.Error(),
+		)
+
+		return nil
+	}
+
+	c.megaraidStorcliCommandRunner = runner
 
 	return c.megaraidStorcliCommandRunner
 }
 
 func (c *Container) getSSACLICommandRunner() *commandrunner.SSACLI {
-	if c.ssacliCommandRunner == nil {
-		c.ssacliCommandRunner = commandrunner.NewSSACLI(&c.ssacliPath)
+	if c.ssacliCommandRunner != nil {
+		return c.ssacliCommandRunner
 	}
+
+	if c.ssacliCommandRunnerTried {
+		return nil
+	}
+
+	c.ssacliCommandRunnerTried = true
+
+	if _, err := exec.LookPath(c.ssacliPath); err != nil {
+		c.logger.Info(
+			"ssacli runner unavailable, related features will be disabled",
+			"path", c.ssacliPath,
+			"error", err.Error(),
+		)
+
+		return nil
+	}
+
+	c.ssacliCommandRunner = commandrunner.NewSSACLI(&c.ssacliPath)
 
 	return c.ssacliCommandRunner
 }

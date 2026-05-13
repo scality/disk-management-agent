@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+//nolint:dupl // The physical-drive discoverer wiring mirrors this file by design.
 package di
 
 import (
@@ -24,8 +25,13 @@ import (
 
 func (c *Container) getMegaRAIDPerccliLVDiscoverer() *logicalvolumediscoverer.MegaRAID {
 	if c.megaraidPerccliLVDiscoverer == nil {
+		rc := c.getMegaRAIDPerccliRAIDController()
+		if rc == nil {
+			return nil
+		}
+
 		c.megaraidPerccliLVDiscoverer = logicalvolumediscoverer.NewMegaRAID(
-			core.NewRAIDController(c.getMegaRAIDPerccliRAIDController()),
+			core.NewRAIDController(rc),
 		)
 	}
 
@@ -34,8 +40,13 @@ func (c *Container) getMegaRAIDPerccliLVDiscoverer() *logicalvolumediscoverer.Me
 
 func (c *Container) getMegaRAIDStorcliLVDiscoverer() *logicalvolumediscoverer.MegaRAID {
 	if c.megaraidStorcliLVDiscoverer == nil {
+		rc := c.getMegaRAIDStorcliRAIDController()
+		if rc == nil {
+			return nil
+		}
+
 		c.megaraidStorcliLVDiscoverer = logicalvolumediscoverer.NewMegaRAID(
-			core.NewRAIDController(c.getMegaRAIDStorcliRAIDController()),
+			core.NewRAIDController(rc),
 		)
 	}
 
@@ -44,8 +55,13 @@ func (c *Container) getMegaRAIDStorcliLVDiscoverer() *logicalvolumediscoverer.Me
 
 func (c *Container) getSmartArrayLVDiscoverer() *logicalvolumediscoverer.SmartArray {
 	if c.smartArrayLVDiscoverer == nil {
+		rc := c.getSmartArrayRAIDController()
+		if rc == nil {
+			return nil
+		}
+
 		c.smartArrayLVDiscoverer = logicalvolumediscoverer.NewSmartArray(
-			core.NewRAIDController(c.getSmartArrayRAIDController()),
+			core.NewRAIDController(rc),
 		)
 	}
 
