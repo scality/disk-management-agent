@@ -5,7 +5,7 @@ go 1.25.6
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/onsi/ginkgo/v2 v2.28.1
-	github.com/onsi/gomega v1.39.1
+	github.com/onsi/gomega v1.41.0
 	github.com/scality/go-errors v1.0.0
 	github.com/scality/raidmgmt v0.14.1
 	github.com/sethvargo/go-envconfig v1.3.0
