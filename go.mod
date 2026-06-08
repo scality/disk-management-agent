@@ -7,7 +7,7 @@ require (
 	github.com/onsi/ginkgo/v2 v2.28.1
 	github.com/onsi/gomega v1.39.1
 	github.com/scality/go-errors v1.0.0
-	github.com/scality/raidmgmt v0.14.0
+	github.com/scality/raidmgmt v0.14.1
 	github.com/sethvargo/go-envconfig v1.3.0
 	github.com/stretchr/testify v1.11.1
 	k8s.io/api v0.33.0
