@@ -165,8 +165,8 @@ github.com/sagikazarmark/locafero v0.12.0 h1:/NQhBAkUb4+fH1jivKHWusDYFjMOOKU88ee
 github.com/sagikazarmark/locafero v0.12.0/go.mod h1:sZh36u/YSZ918v0Io+U9ogLYQJ9tLLBmM4eneO6WwsI=
 github.com/scality/go-errors v1.0.0 h1:GhCb1JRSigdK/WxjT4nYkl3Autm8IB/cHUSXhDvpsXo=
 github.com/scality/go-errors v1.0.0/go.mod h1:Vs+t0+BTomnFiX2rWhY2wBMCxrQ1ZtiS0SIcp5bQmlA=
-github.com/scality/raidmgmt v0.14.0 h1:xwAVC1U7taSqMVkOGLbamZiF9HDtHkyBEWb2A9eOJxs=
-github.com/scality/raidmgmt v0.14.0/go.mod h1:QbPOSKWNhPHNlza9CL3hH5wWuUuESZz/kB0oH/gIomY=
+github.com/scality/raidmgmt v0.14.1 h1:MDJghe1FkqClP3DMYKw52SjTgtiH/cu2dc+VPfT5wiA=
+github.com/scality/raidmgmt v0.14.1/go.mod h1:QbPOSKWNhPHNlza9CL3hH5wWuUuESZz/kB0oH/gIomY=
 github.com/sethvargo/go-envconfig v1.3.0 h1:gJs+Fuv8+f05omTpwWIu6KmuseFAXKrIaOZSh8RMt0U=
 github.com/sethvargo/go-envconfig v1.3.0/go.mod h1:JLd0KFWQYzyENqnEPWWZ49i4vzZo/6nRidxI8YvGiHw=
 github.com/spf13/afero v1.15.0 h1:b/YBCLWAJdFWJTN9cLhiXXcD7mzKn9Dm86dNnfyQw1I=
