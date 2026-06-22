@@ -43,6 +43,7 @@ jobs:
           curl --fail -LO -u ${{ secrets.ARTIFACTS_USER }}:${{ secrets.ARTIFACTS_PASSWORD }}
           ${{ steps.artifacts.outputs.link }}/crds.yaml
 
+
       - uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           name: Disk Management Agent ${{ github.ref_name }}
