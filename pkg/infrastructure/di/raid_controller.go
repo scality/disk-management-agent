@@ -52,6 +52,32 @@ func (c *Container) getMegaRAIDStorcliRAIDController() *megaraid.Adapter {
 	return c.megaraidStorcliRAIDController
 }
 
+func (c *Container) getStorcli2RAIDController() *raidcontroller.StorCLI2 {
+	if c.storcli2RAIDController == nil {
+		runner := c.getStorcli2CommandRunner()
+		if runner == nil {
+			return nil
+		}
+
+		c.storcli2RAIDController = raidcontroller.NewStorCLI2(runner)
+	}
+
+	return c.storcli2RAIDController
+}
+
+func (c *Container) getPerccli2RAIDController() *raidcontroller.StorCLI2 {
+	if c.perccli2RAIDController == nil {
+		runner := c.getPerccli2CommandRunner()
+		if runner == nil {
+			return nil
+		}
+
+		c.perccli2RAIDController = raidcontroller.NewStorCLI2(runner)
+	}
+
+	return c.perccli2RAIDController
+}
+
 func (c *Container) getSmartArrayRAIDController() *raidcontroller.SmartArray {
 	if c.smartArrayRAIDController == nil {
 		ssacliRunner := c.getSSACLICommandRunner()

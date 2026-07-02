@@ -35,29 +35,41 @@ type Container struct {
 	k8sClient client.Client
 	nodeName  string
 
-	storcliPath string
-	perccliPath string
-	ssacliPath  string
+	storcliPath  string
+	perccliPath  string
+	storcli2Path string
+	perccli2Path string
+	ssacliPath   string
 
 	megaraidPerccliCommandRunner *megaraid.MegaRAIDRunner
 	megaraidStorcliCommandRunner *megaraid.MegaRAIDRunner
+	storcli2CommandRunner        *commandrunner.StorCLI2
+	perccli2CommandRunner        *commandrunner.PercCLI2
 	ssacliCommandRunner          *commandrunner.SSACLI
 	lsblkCommandRunner           *commandrunner.LSBLK
 
 	megaraidPerccliCommandRunnerTried bool
 	megaraidStorcliCommandRunnerTried bool
+	storcli2CommandRunnerTried        bool
+	perccli2CommandRunnerTried        bool
 	ssacliCommandRunnerTried          bool
 
 	megaraidPerccliRAIDController *megaraid.Adapter
 	megaraidStorcliRAIDController *megaraid.Adapter
+	storcli2RAIDController        *raidcontroller.StorCLI2
+	perccli2RAIDController        *raidcontroller.StorCLI2
 	smartArrayRAIDController      *raidcontroller.SmartArray
 
 	megaraidPerccliDiscoverer *physicaldrivediscoverer.MegaRAID
 	megaraidStorcliDiscoverer *physicaldrivediscoverer.MegaRAID
+	storcli2Discoverer        *physicaldrivediscoverer.MegaRAID
+	perccli2Discoverer        *physicaldrivediscoverer.MegaRAID
 	smartArrayDiscoverer      *physicaldrivediscoverer.SmartArray
 
 	megaraidPerccliLVDiscoverer *logicalvolumediscoverer.MegaRAID
 	megaraidStorcliLVDiscoverer *logicalvolumediscoverer.MegaRAID
+	storcli2LVDiscoverer        *logicalvolumediscoverer.MegaRAID
+	perccli2LVDiscoverer        *logicalvolumediscoverer.MegaRAID
 	smartArrayLVDiscoverer      *logicalvolumediscoverer.SmartArray
 
 	discoveredPhysicalDiskStore *discoveredphysicaldiskstore.Kubernetes
@@ -73,14 +85,18 @@ func NewContainer(
 	nodeName string,
 	storcliPath string,
 	perccliPath string,
+	storcli2Path string,
+	perccli2Path string,
 	ssacliPath string,
 ) *Container {
 	return &Container{
-		logger:      logger,
-		k8sClient:   k8sClient,
-		nodeName:    nodeName,
-		storcliPath: storcliPath,
-		perccliPath: perccliPath,
-		ssacliPath:  ssacliPath,
+		logger:       logger,
+		k8sClient:    k8sClient,
+		nodeName:     nodeName,
+		storcliPath:  storcliPath,
+		perccliPath:  perccliPath,
+		storcli2Path: storcli2Path,
+		perccli2Path: perccli2Path,
+		ssacliPath:   ssacliPath,
 	}
 }

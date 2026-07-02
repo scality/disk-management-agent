@@ -77,6 +77,63 @@ func (c *Container) getMegaRAIDStorcliCommandRunner() *megaraid.MegaRAIDRunner {
 	return c.megaraidStorcliCommandRunner
 }
 
+// getStorcli2CommandRunner returns the storcli2 command runner, or nil if the
+// binary is absent. Unlike NewMegaRAIDRunner, commandrunner.NewStorCLI2 does
+// not validate the binary path at construction, so availability is probed with
+// exec.LookPath (as for ssacli) to keep the warn-and-skip behaviour.
+func (c *Container) getStorcli2CommandRunner() *commandrunner.StorCLI2 {
+	if c.storcli2CommandRunner != nil {
+		return c.storcli2CommandRunner
+	}
+
+	if c.storcli2CommandRunnerTried {
+		return nil
+	}
+
+	c.storcli2CommandRunnerTried = true
+
+	if _, err := exec.LookPath(c.storcli2Path); err != nil {
+		c.logger.Info(
+			"storcli2 runner unavailable, related features will be disabled",
+			"path", c.storcli2Path,
+			"error", err.Error(),
+		)
+
+		return nil
+	}
+
+	c.storcli2CommandRunner = commandrunner.NewStorCLI2(&c.storcli2Path)
+
+	return c.storcli2CommandRunner
+}
+
+// getPerccli2CommandRunner mirrors getStorcli2CommandRunner for perccli2.
+func (c *Container) getPerccli2CommandRunner() *commandrunner.PercCLI2 {
+	if c.perccli2CommandRunner != nil {
+		return c.perccli2CommandRunner
+	}
+
+	if c.perccli2CommandRunnerTried {
+		return nil
+	}
+
+	c.perccli2CommandRunnerTried = true
+
+	if _, err := exec.LookPath(c.perccli2Path); err != nil {
+		c.logger.Info(
+			"perccli2 runner unavailable, related features will be disabled",
+			"path", c.perccli2Path,
+			"error", err.Error(),
+		)
+
+		return nil
+	}
+
+	c.perccli2CommandRunner = commandrunner.NewPercCLI2(&c.perccli2Path)
+
+	return c.perccli2CommandRunner
+}
+
 func (c *Container) getSSACLICommandRunner() *commandrunner.SSACLI {
 	if c.ssacliCommandRunner != nil {
 		return c.ssacliCommandRunner
