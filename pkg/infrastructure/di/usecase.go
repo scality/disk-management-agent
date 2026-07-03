@@ -17,8 +17,6 @@ limitations under the License.
 package di
 
 import (
-	"github.com/go-logr/logr"
-
 	"disk-management-agent/pkg/infrastructure/discovereddrivecache"
 	"disk-management-agent/pkg/infrastructure/discoveredphysicaldiskstore"
 	"disk-management-agent/pkg/service"
@@ -60,76 +58,91 @@ func (c *Container) GetDiscoverPhysicalDrivesUseCase() *usecase.DiscoverPhysical
 	return c.discoverPhysicalDrivesUseCase
 }
 
-// discovererCandidate names a discoverer and the getter that constructs it.
-// get returns a concrete pointer type: a nil pointer means the discoverer
-// could not be built (its CLI tool is absent on this host). The bool reports
-// whether the returned interface value is present — the check must run on the
-// concrete pointer inside get, because appending a typed nil pointer to an
-// interface slice would yield a non-nil interface wrapping it, defeating the
-// nil check inside the use case.
-type discovererCandidate[T any] struct {
-	kind string
-	get  func() (T, bool)
-}
+// buildPhysicalDriveDiscoverers assembles the physical-drive discoverer
+// slice for the use case, skipping any discoverer that could not be
+// constructed (e.g. because its CLI tool is unavailable on this host).
+//
+// Appending a typed nil pointer to an interface slice would yield a
+// non-nil interface value wrapping a nil concrete pointer, which would
+// defeat the nil check inside the use case. We therefore append only
+// concrete pointers that are non-nil.
+//
+//nolint:dupl // The logical-volume discoverer assembly mirrors this by design.
+func (c *Container) buildPhysicalDriveDiscoverers() []service.PhysicalDriveDiscoverer {
+	var discoverers []service.PhysicalDriveDiscoverer
 
-// collectDiscoverers appends every present candidate, logging the rest.
-func collectDiscoverers[T any](logger logr.Logger, role string, candidates []discovererCandidate[T]) []T {
-	var discoverers []T
+	if d := c.getMegaRAIDPerccliDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID perccli physical-drive discoverer disabled")
+	}
 
-	for _, candidate := range candidates {
-		if d, ok := candidate.get(); ok {
-			discoverers = append(discoverers, d)
-		} else {
-			logger.Info(candidate.kind + " " + role + " discoverer disabled")
-		}
+	if d := c.getMegaRAIDStorcliDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID storcli physical-drive discoverer disabled")
+	}
+
+	if d := c.getStorcli2Discoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("storcli2 physical-drive discoverer disabled")
+	}
+
+	if d := c.getPerccli2Discoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("perccli2 physical-drive discoverer disabled")
+	}
+
+	if d := c.getSmartArrayDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("SmartArray physical-drive discoverer disabled")
 	}
 
 	return discoverers
 }
 
-// present adapts a concrete-pointer getter to the (value, ok) shape
-// collectDiscoverers expects. Keeping the nil check on the concrete pointer
-// is what makes it meaningful: a nil *T assigned to interface I yields a
-// non-nil I, so we report ok from the concrete pointer, not the interface.
-func present[I any, T any](d *T) (I, bool) {
-	if d != nil {
-		return any(d).(I), true
+// buildLogicalVolumeDiscoverers mirrors buildPhysicalDriveDiscoverers
+// for the logical-volume discoverer slice. See that function for the
+// rationale behind the explicit nil-check.
+//
+//nolint:dupl // The physical-drive discoverer assembly mirrors this by design.
+func (c *Container) buildLogicalVolumeDiscoverers() []service.LogicalVolumeDiscoverer {
+	var discoverers []service.LogicalVolumeDiscoverer
+
+	if d := c.getMegaRAIDPerccliLVDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID perccli logical-volume discoverer disabled")
 	}
 
-	var zero I
+	if d := c.getMegaRAIDStorcliLVDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID storcli logical-volume discoverer disabled")
+	}
 
-	return zero, false
-}
+	if d := c.getStorcli2LVDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("storcli2 logical-volume discoverer disabled")
+	}
 
-// buildPhysicalDriveDiscoverers assembles the physical-drive discoverer
-// slice for the use case, skipping any discoverer that could not be
-// constructed (e.g. because its CLI tool is unavailable on this host).
-func (c *Container) buildPhysicalDriveDiscoverers() []service.PhysicalDriveDiscoverer {
-	type discoverer = service.PhysicalDriveDiscoverer
+	if d := c.getPerccli2LVDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("perccli2 logical-volume discoverer disabled")
+	}
 
-	return collectDiscoverers(c.logger, "physical-drive", []discovererCandidate[discoverer]{
-		{"MegaRAID perccli", func() (discoverer, bool) { return present[discoverer](c.getMegaRAIDPerccliDiscoverer()) }},
-		{"MegaRAID storcli", func() (discoverer, bool) { return present[discoverer](c.getMegaRAIDStorcliDiscoverer()) }},
-		{"storcli2", func() (discoverer, bool) { return present[discoverer](c.getStorcli2Discoverer()) }},
-		{"perccli2", func() (discoverer, bool) { return present[discoverer](c.getPerccli2Discoverer()) }},
-		{"SmartArray", func() (discoverer, bool) { return present[discoverer](c.getSmartArrayDiscoverer()) }},
-	})
-}
+	if d := c.getSmartArrayLVDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("SmartArray logical-volume discoverer disabled")
+	}
 
-// buildLogicalVolumeDiscoverers mirrors buildPhysicalDriveDiscoverers
-// for the logical-volume discoverer slice.
-//
-//nolint:dupl // Mirrors buildPhysicalDriveDiscoverers by design.
-func (c *Container) buildLogicalVolumeDiscoverers() []service.LogicalVolumeDiscoverer {
-	type discoverer = service.LogicalVolumeDiscoverer
-
-	return collectDiscoverers(c.logger, "logical-volume", []discovererCandidate[discoverer]{
-		{"MegaRAID perccli", func() (discoverer, bool) { return present[discoverer](c.getMegaRAIDPerccliLVDiscoverer()) }},
-		{"MegaRAID storcli", func() (discoverer, bool) { return present[discoverer](c.getMegaRAIDStorcliLVDiscoverer()) }},
-		{"storcli2", func() (discoverer, bool) { return present[discoverer](c.getStorcli2LVDiscoverer()) }},
-		{"perccli2", func() (discoverer, bool) { return present[discoverer](c.getPerccli2LVDiscoverer()) }},
-		{"SmartArray", func() (discoverer, bool) { return present[discoverer](c.getSmartArrayLVDiscoverer()) }},
-	})
+	return discoverers
 }
 
 // GetReconcileDiscoveredPhysicalDiskUseCase returns the singleton reconcile use case.
