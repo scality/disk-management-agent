@@ -66,6 +66,8 @@ func (c *Container) GetDiscoverPhysicalDrivesUseCase() *usecase.DiscoverPhysical
 // non-nil interface value wrapping a nil concrete pointer, which would
 // defeat the nil check inside the use case. We therefore append only
 // concrete pointers that are non-nil.
+//
+//nolint:dupl // The logical-volume discoverer assembly mirrors this by design.
 func (c *Container) buildPhysicalDriveDiscoverers() []service.PhysicalDriveDiscoverer {
 	var discoverers []service.PhysicalDriveDiscoverer
 
@@ -81,6 +83,18 @@ func (c *Container) buildPhysicalDriveDiscoverers() []service.PhysicalDriveDisco
 		c.logger.Info("MegaRAID storcli physical-drive discoverer disabled")
 	}
 
+	if d := c.getStorcli2Discoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID storcli2 physical-drive discoverer disabled")
+	}
+
+	if d := c.getPerccli2Discoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID perccli2 physical-drive discoverer disabled")
+	}
+
 	if d := c.getSmartArrayDiscoverer(); d != nil {
 		discoverers = append(discoverers, d)
 	} else {
@@ -93,6 +107,8 @@ func (c *Container) buildPhysicalDriveDiscoverers() []service.PhysicalDriveDisco
 // buildLogicalVolumeDiscoverers mirrors buildPhysicalDriveDiscoverers
 // for the logical-volume discoverer slice. See that function for the
 // rationale behind the explicit nil-check.
+//
+//nolint:dupl // The physical-drive discoverer assembly mirrors this by design.
 func (c *Container) buildLogicalVolumeDiscoverers() []service.LogicalVolumeDiscoverer {
 	var discoverers []service.LogicalVolumeDiscoverer
 
@@ -106,6 +122,18 @@ func (c *Container) buildLogicalVolumeDiscoverers() []service.LogicalVolumeDisco
 		discoverers = append(discoverers, d)
 	} else {
 		c.logger.Info("MegaRAID storcli logical-volume discoverer disabled")
+	}
+
+	if d := c.getStorcli2LVDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID storcli2 logical-volume discoverer disabled")
+	}
+
+	if d := c.getPerccli2LVDiscoverer(); d != nil {
+		discoverers = append(discoverers, d)
+	} else {
+		c.logger.Info("MegaRAID perccli2 logical-volume discoverer disabled")
 	}
 
 	if d := c.getSmartArrayLVDiscoverer(); d != nil {

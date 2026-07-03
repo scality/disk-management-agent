@@ -53,6 +53,36 @@ func (c *Container) getMegaRAIDStorcliDiscoverer() *physicaldrivediscoverer.Mega
 	return c.megaraidStorcliDiscoverer
 }
 
+func (c *Container) getStorcli2Discoverer() *physicaldrivediscoverer.MegaRAID {
+	if c.storcli2Discoverer == nil {
+		rc := c.getStorcli2RAIDController()
+		if rc == nil {
+			return nil
+		}
+
+		c.storcli2Discoverer = physicaldrivediscoverer.NewMegaRAID(
+			core.NewRAIDController(rc),
+		)
+	}
+
+	return c.storcli2Discoverer
+}
+
+func (c *Container) getPerccli2Discoverer() *physicaldrivediscoverer.MegaRAID {
+	if c.perccli2Discoverer == nil {
+		rc := c.getPerccli2RAIDController()
+		if rc == nil {
+			return nil
+		}
+
+		c.perccli2Discoverer = physicaldrivediscoverer.NewMegaRAID(
+			core.NewRAIDController(rc),
+		)
+	}
+
+	return c.perccli2Discoverer
+}
+
 func (c *Container) getSmartArrayDiscoverer() *physicaldrivediscoverer.SmartArray {
 	if c.smartArrayDiscoverer == nil {
 		rc := c.getSmartArrayRAIDController()

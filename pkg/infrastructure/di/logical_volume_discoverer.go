@@ -53,6 +53,36 @@ func (c *Container) getMegaRAIDStorcliLVDiscoverer() *logicalvolumediscoverer.Me
 	return c.megaraidStorcliLVDiscoverer
 }
 
+func (c *Container) getStorcli2LVDiscoverer() *logicalvolumediscoverer.MegaRAID {
+	if c.storcli2LVDiscoverer == nil {
+		rc := c.getStorcli2RAIDController()
+		if rc == nil {
+			return nil
+		}
+
+		c.storcli2LVDiscoverer = logicalvolumediscoverer.NewMegaRAID(
+			core.NewRAIDController(rc),
+		)
+	}
+
+	return c.storcli2LVDiscoverer
+}
+
+func (c *Container) getPerccli2LVDiscoverer() *logicalvolumediscoverer.MegaRAID {
+	if c.perccli2LVDiscoverer == nil {
+		rc := c.getPerccli2RAIDController()
+		if rc == nil {
+			return nil
+		}
+
+		c.perccli2LVDiscoverer = logicalvolumediscoverer.NewMegaRAID(
+			core.NewRAIDController(rc),
+		)
+	}
+
+	return c.perccli2LVDiscoverer
+}
+
 func (c *Container) getSmartArrayLVDiscoverer() *logicalvolumediscoverer.SmartArray {
 	if c.smartArrayLVDiscoverer == nil {
 		rc := c.getSmartArrayRAIDController()

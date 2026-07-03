@@ -39,6 +39,8 @@ type Environment struct {
 	PodServiceAccount string `env:"POD_SERVICE_ACCOUNT"`
 	StorcliPath       string `env:"STORCLI_PATH, default=/host/libexec/MegaRAID/storcli/storcli64"`
 	PerccliPath       string `env:"PERCCLI_PATH, default=/host/libexec/MegaRAID/perccli/perccli64"`
+	Storcli2Path      string `env:"STORCLI2_PATH, default=/host/libexec/MegaRAID/storcli2/storcli2"`
+	Perccli2Path      string `env:"PERCCLI2_PATH, default=/host/libexec/MegaRAID/perccli2/perccli2"`
 	SsacliPath        string `env:"SSACLI_PATH, default=/host/libexec/ssacli"`
 }
 

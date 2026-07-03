@@ -223,6 +223,8 @@ func main() {
 		cfg.NodeName,
 		cfg.StorcliPath,
 		cfg.PerccliPath,
+		cfg.Storcli2Path,
+		cfg.Perccli2Path,
 		cfg.SsacliPath,
 	)
 	discoverUseCase := container.GetDiscoverPhysicalDrivesUseCase()
