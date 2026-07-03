@@ -86,13 +86,13 @@ func (c *Container) buildPhysicalDriveDiscoverers() []service.PhysicalDriveDisco
 	if d := c.getStorcli2Discoverer(); d != nil {
 		discoverers = append(discoverers, d)
 	} else {
-		c.logger.Info("storcli2 physical-drive discoverer disabled")
+		c.logger.Info("MegaRAID storcli2 physical-drive discoverer disabled")
 	}
 
 	if d := c.getPerccli2Discoverer(); d != nil {
 		discoverers = append(discoverers, d)
 	} else {
-		c.logger.Info("perccli2 physical-drive discoverer disabled")
+		c.logger.Info("MegaRAID perccli2 physical-drive discoverer disabled")
 	}
 
 	if d := c.getSmartArrayDiscoverer(); d != nil {
@@ -127,13 +127,13 @@ func (c *Container) buildLogicalVolumeDiscoverers() []service.LogicalVolumeDisco
 	if d := c.getStorcli2LVDiscoverer(); d != nil {
 		discoverers = append(discoverers, d)
 	} else {
-		c.logger.Info("storcli2 logical-volume discoverer disabled")
+		c.logger.Info("MegaRAID storcli2 logical-volume discoverer disabled")
 	}
 
 	if d := c.getPerccli2LVDiscoverer(); d != nil {
 		discoverers = append(discoverers, d)
 	} else {
-		c.logger.Info("perccli2 logical-volume discoverer disabled")
+		c.logger.Info("MegaRAID perccli2 logical-volume discoverer disabled")
 	}
 
 	if d := c.getSmartArrayLVDiscoverer(); d != nil {
