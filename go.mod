@@ -1,6 +1,6 @@
 module disk-management-agent
 
-go 1.25.6
+go 1.27.1
 
 require (
 	github.com/go-logr/logr v1.4.3
