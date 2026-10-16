@@ -118,7 +118,7 @@ func (u *DiscoverPhysicalDrives) buildCacheMap(
 			u.logger.V(1).Info(
 				"Skipping non-HDD drive",
 				"type", drive.Type.String(),
-				"slot", drive.Slot.Format(),
+				"slot", drive.Slot.String(),
 				"controllerType", drive.ControllerType,
 				"controllerID", drive.ControllerID,
 			)
