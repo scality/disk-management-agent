@@ -163,8 +163,8 @@ github.com/scality/go-errors v1.3.0 h1:InguXV1zpPyQKUCKDCA0xsNoxMR0lISW8iyOI5xHv
 github.com/scality/go-errors v1.3.0/go.mod h1:PCgOL4vdz+9wyVrZ2/f01dBUZqLrxTbUEAEJbxLnSWY=
 github.com/scality/raidmgmt v0.18.1 h1:yrQrLs1ArxC4cKGWjTnRXqob2p3EDFSLehOVTEBYvqw=
 github.com/scality/raidmgmt v0.18.1/go.mod h1:z/pqJykY8jtEE+iBp7ZTW1QfaV72cpBzhIb/iIu7e1w=
-github.com/sethvargo/go-envconfig v1.3.0 h1:gJs+Fuv8+f05omTpwWIu6KmuseFAXKrIaOZSh8RMt0U=
-github.com/sethvargo/go-envconfig v1.3.0/go.mod h1:JLd0KFWQYzyENqnEPWWZ49i4vzZo/6nRidxI8YvGiHw=
+github.com/sethvargo/go-envconfig v1.4.3 h1:9RJrW9aiy3SJVRJ1svntpZvBw3ghj941u/BseS/TokY=
+github.com/sethvargo/go-envconfig v1.4.3/go.mod h1:ebe6rgj7KzrRZPzDXU4W6WZWDEirQwvcgmS0bmC3Sjg=
 github.com/spf13/afero v1.15.0 h1:b/YBCLWAJdFWJTN9cLhiXXcD7mzKn9Dm86dNnfyQw1I=
 github.com/spf13/afero v1.15.0/go.mod h1:NC2ByUVxtQs4b3sIUphxK0NioZnmxgyCrfzeuq8lxMg=
 github.com/spf13/cast v1.10.0 h1:h2x0u2shc1QuLHfxi+cTJvs30+ZAHOGRic8uyGTDWxY=
