@@ -20,7 +20,6 @@ import (
 	"context"
 
 	"github.com/scality/go-errors"
-	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -45,45 +44,27 @@ type DiscoveredPhysicalDiskCustomValidator struct {
 	AllowedServiceAccount string
 }
 
-var _ admission.CustomValidator = &DiscoveredPhysicalDiskCustomValidator{}
+var _ admission.Validator[*metalk8sv1alpha1.DiscoveredPhysicalDisk] = &DiscoveredPhysicalDiskCustomValidator{}
 
 // +kubebuilder:webhook:path=/validate-metalk8s-scality-com-v1alpha1-discoveredphysicaldisk,mutating=false,failurePolicy=fail,sideEffects=None,groups=metalk8s.scality.com,resources=discoveredphysicaldisks,verbs=create;update,versions=v1alpha1,name=vdiscoveredphysicaldisk-v1alpha1.kb.io,admissionReviewVersions=v1
 
-// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type DiscoveredPhysicalDisk.
-func (v *DiscoveredPhysicalDiskCustomValidator) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
-	disk, ok := obj.(*metalk8sv1alpha1.DiscoveredPhysicalDisk)
-	if !ok {
-		return nil, errors.Wrap(domain.ErrValidation,
-			errors.WithDetailf("expected a DiscoveredPhysicalDisk object but got %T", obj),
-		)
-	}
+// ValidateCreate implements admission.Validator so a webhook will be registered for the type DiscoveredPhysicalDisk.
+func (v *DiscoveredPhysicalDiskCustomValidator) ValidateCreate(ctx context.Context, disk *metalk8sv1alpha1.DiscoveredPhysicalDisk) (admission.Warnings, error) {
 	discoveredphysicaldisklog.Info("Validation for DiscoveredPhysicalDisk upon creation", "name", disk.GetName())
 	return v.validateServiceAccount(ctx)
 }
 
-// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type DiscoveredPhysicalDisk.
-func (v *DiscoveredPhysicalDiskCustomValidator) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
-	disk, ok := newObj.(*metalk8sv1alpha1.DiscoveredPhysicalDisk)
-	if !ok {
-		return nil, errors.Wrap(domain.ErrValidation,
-			errors.WithDetailf("expected a DiscoveredPhysicalDisk object but got %T", newObj),
-		)
-	}
+// ValidateUpdate implements admission.Validator so a webhook will be registered for the type DiscoveredPhysicalDisk.
+func (v *DiscoveredPhysicalDiskCustomValidator) ValidateUpdate(ctx context.Context, _, disk *metalk8sv1alpha1.DiscoveredPhysicalDisk) (admission.Warnings, error) {
 	discoveredphysicaldisklog.Info("Validation for DiscoveredPhysicalDisk upon update", "name", disk.GetName())
 	return v.validateServiceAccount(ctx)
 }
 
-// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type DiscoveredPhysicalDisk.
+// ValidateDelete implements admission.Validator so a webhook will be registered for the type DiscoveredPhysicalDisk.
 // Delete is not restricted — any user with appropriate RBAC permissions can delete these resources.
 // Note: this method is required to satisfy the interface but will not be called,
 // because the webhook marker above only registers for create and update verbs.
-func (v *DiscoveredPhysicalDiskCustomValidator) ValidateDelete(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
-	disk, ok := obj.(*metalk8sv1alpha1.DiscoveredPhysicalDisk)
-	if !ok {
-		return nil, errors.Wrap(domain.ErrValidation,
-			errors.WithDetailf("expected a DiscoveredPhysicalDisk object but got %T", obj),
-		)
-	}
+func (v *DiscoveredPhysicalDiskCustomValidator) ValidateDelete(_ context.Context, disk *metalk8sv1alpha1.DiscoveredPhysicalDisk) (admission.Warnings, error) {
 	discoveredphysicaldisklog.Info("Validation for DiscoveredPhysicalDisk upon deletion", "name", disk.GetName())
 	return nil, nil
 }
@@ -111,8 +92,7 @@ func (v *DiscoveredPhysicalDiskCustomValidator) validateServiceAccount(ctx conte
 
 // SetupDiscoveredPhysicalDiskWebhookWithManager registers the validating webhook for DiscoveredPhysicalDisk with the manager.
 func SetupDiscoveredPhysicalDiskWebhookWithManager(mgr ctrl.Manager, validator *DiscoveredPhysicalDiskCustomValidator) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(&metalk8sv1alpha1.DiscoveredPhysicalDisk{}).
+	return ctrl.NewWebhookManagedBy(mgr, &metalk8sv1alpha1.DiscoveredPhysicalDisk{}).
 		WithValidator(validator).
 		Complete()
 }
