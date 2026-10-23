@@ -131,8 +131,7 @@ github.com/scality/go-errors v1.3.0 h1:InguXV1zpPyQKUCKDCA0xsNoxMR0lISW8iyOI5xHv
 github.com/scality/go-errors v1.3.0/go.mod h1:PCgOL4vdz+9wyVrZ2/f01dBUZqLrxTbUEAEJbxLnSWY=
 github.com/scality/raidmgmt v0.19.0 h1:jyT5YqT8FIBn6GT1QLcnh+zC7D9k0BiFTT14WfIkHsc=
 github.com/scality/raidmgmt v0.19.0/go.mod h1:KEyQgyM1r81dU9aOH1vfjNywiwifEFq1KwBsYn3pxXw=
-github.com/sethvargo/go-envconfig v1.4.3 h1:9RJrW9aiy3SJVRJ1svntpZvBw3ghj941u/BseS/TokY=
-github.com/sethvargo/go-envconfig v1.4.3/go.mod h1:ebe6rgj7KzrRZPzDXU4W6WZWDEirQwvcgmS0bmC3Sjg=
+github.com/sethvargo/go-envconfig/v2 v2.0.0 h1:LYemMAcGZzti3XYlEM3xCr+dt+HIoEQHlrkE+pJ2ZIM=
 github.com/sethvargo/go-envconfig/v2 v2.0.0/go.mod h1:pOBv/gjpT33Po+zZzuU11A4Wps5AWN/RkZg5fyUW6CU=
 github.com/spf13/cobra v1.10.2 h1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=
 github.com/spf13/cobra v1.10.2/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=

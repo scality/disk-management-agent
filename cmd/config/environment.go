@@ -20,7 +20,7 @@ import (
 	"context"
 
 	"github.com/scality/go-errors"
-	"github.com/sethvargo/go-envconfig"
+	"github.com/sethvargo/go-envconfig/v2"
 
 	"disk-management-agent/pkg/domain"
 )
