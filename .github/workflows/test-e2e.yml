@@ -28,6 +28,4 @@ jobs:
       - name: Running Test e2e
         run: |
           go mod tidy
-          # E2E execution is intentionally disabled for now.
-          # Keep this workflow as a bootstrap/smoke scaffold until enabled.
-          #make test-e2e
+          make test-e2e

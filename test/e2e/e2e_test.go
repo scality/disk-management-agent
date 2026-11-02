@@ -46,7 +46,7 @@ var _ = Describe("Manager", Ordered, func() {
 	var controllerPodName string
 
 	// Before running the tests, set up the environment by creating the namespace,
-	// enforce the restricted security policy to the namespace, installing CRDs,
+	// allow privileged pods in the namespace, installing CRDs,
 	// and deploying the controller.
 	BeforeAll(func() {
 		By("creating manager namespace")
@@ -54,11 +54,12 @@ var _ = Describe("Manager", Ordered, func() {
 		_, err := utils.Run(cmd)
 		Expect(err).NotTo(HaveOccurred(), "Failed to create namespace")
 
-		By("labeling the namespace to enforce the restricted security policy")
+		// The manager needs privileged mode, root and hostPath volumes to reach the disks.
+		By("labeling the namespace to allow privileged pods")
 		cmd = exec.Command("kubectl", "label", "--overwrite", "ns", namespace,
-			"pod-security.kubernetes.io/enforce=restricted")
+			"pod-security.kubernetes.io/enforce=privileged")
 		_, err = utils.Run(cmd)
-		Expect(err).NotTo(HaveOccurred(), "Failed to label namespace with restricted policy")
+		Expect(err).NotTo(HaveOccurred(), "Failed to label namespace with privileged policy")
 
 		By("installing CRDs")
 		cmd = exec.Command("make", "install")
@@ -66,9 +67,13 @@ var _ = Describe("Manager", Ordered, func() {
 		Expect(err).NotTo(HaveOccurred(), "Failed to install CRDs")
 
 		By("deploying the controller-manager")
-		cmd = exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", projectImage))
-		_, err = utils.Run(cmd)
-		Expect(err).NotTo(HaveOccurred(), "Failed to deploy the controller-manager")
+		// cert-manager reports its webhook Available before the cainjector writes the CA bundle,
+		// so the first apply of the Certificates can fail with x509. The apply is idempotent: retry.
+		Eventually(func(g Gomega) {
+			cmd := exec.Command("make", "deploy", fmt.Sprintf("IMG=%s", projectImage))
+			_, err := utils.Run(cmd)
+			g.Expect(err).NotTo(HaveOccurred(), "Failed to deploy the controller-manager")
+		}, 2*time.Minute, 5*time.Second).Should(Succeed())
 	})
 
 	// After all tests have been executed, clean up by undeploying the controller, uninstalling CRDs,
