@@ -19,7 +19,7 @@ tolerated. Be constructive in code reviews and discussions.
 
 | Tool | Version | Purpose |
 |---|---|---|
-| Go | 1.27+ | Build and test |
+| Go | version in `go.mod` | Build and test |
 | Make | any | Build system |
 | Docker | any | Container image builds |
 | Kind | any | End-to-end tests |
